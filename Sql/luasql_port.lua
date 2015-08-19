@@ -6,16 +6,19 @@ local sqlite3 = require("luasql.sqlite3").sqlite3("")
 
 local Sql = {}
 
-function Sql.new(tab)
-   tab = (type(tab) == "table" and tab)
-      or (type(tab) == "string" and { filename = tab })
-   tab.conn = sqlite3:connect(tab.filename)
-   return setmetatable(tab, Sql)
+function Sql:init()
+   self.conn = sqlite3:connect(self.filename)
+end
+
+function Sql.new(self)
+   self = setmetatable(self, Sql)
+   self:init()
+   return self
 end
 
 -- NOTE: high security risk zone.
 function Sql:command_string(sql_command, args)  -- TODO question marks and arguments..
-   args = args or {}
+   if not args or #args == 0 then return sql_command end
    local command_str = ""
    local parts = string_split(sql_command, "?")
    assert( #args == #parts - 1, "not enough arguments")
@@ -26,6 +29,7 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
       command_str = command_str .. parts[j] .. val
       j = j + 1
    end
+   command_str = command_str .. parts[j]
    return command_str
 end
 
@@ -45,8 +49,8 @@ function Sql:cursor(sql_command, args)
 end
 
 -- Produces an entire list immediately.
-function Sql:list_cursor(cursor)
-   if not cursor then return {} end  -- Hope its alright..
+local function list_cursor(cursor)
+   if not cursor or type(cursor) == "number" then return cursor end
 
    local ret, new = {}, {}
    while cursor:fetch(new, "a") do
@@ -58,11 +62,11 @@ function Sql:list_cursor(cursor)
 end
 
 function Sql:exec(sql_command, args)
-   return Sql.list_cursor(self, Sql.cursor(self, sql_command, args))
+   return list_cursor(Sql._cursor(self, Sql.command_string(self, sql_command, args)))
 end
 
 function Sql:compile(sql_command)  -- Doesnt actually compile anything..
-   return function(args) return self:exec(sql_cmd, args) end
+   return function(...) return self:exec(sql_command, {...}) end
 end
 
 local c = require "o_jasper_common"
