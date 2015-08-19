@@ -4,7 +4,9 @@ API.
 
 An sql table searcher would have:
 
-* `.new{db=database}`
+* `.new{filename=, db=..}` makes a new object, best to supply just `filename`,
+  it'll get you the database.(-connection)
+  `":memory:"` will make one in-memory.
 * `:compile(sql_command)` returning an object that is callable to
   effectively `:exec` it with commands.
 * `:exec(sql_command, args)`
@@ -12,11 +14,11 @@ An sql table searcher would have:
 If `:compile(..)` actually does something, then one can consider memoizing it.
 Otherwise it is just convenient accessing of commands.
 
-* To `.new` add `repl=` replacements in the commands and `cmds=`
+* To `.new` add `repl=` replacements in the commands and `cmd_strs=`
   a key-value store with either string(just replace stuff) or function
   (return the string with the object as input) values.
 * `:cmd(name)` calls the command, and memoizes the corresponding
-  `:compile` result.
+  `:compile` result. (`.cmds[..]` or `.cmds.thing` works too)
 
 ### Parsing
 This should be entirely separate, with no idea of the database or
@@ -58,5 +60,6 @@ complicated stuff, go to the sql code itself.
 
 # TODO
 
-* Maybe.. The Formulator inputs should just work with pattern + list of
-  parameters instead of something  talking to the class.
+* Searcher throwing it together does not exist yet.
+
+* Database part should work as described.. work out whether the rest does.

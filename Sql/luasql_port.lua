@@ -7,7 +7,7 @@ local sqlite3 = require("luasql.sqlite3").sqlite3("")
 local Sql = {}
 
 function Sql:init()
-   self.conn = sqlite3:connect(self.filename)
+   self.db = sqlite3:connect(self.filename)
 end
 
 function Sql.new(self)
@@ -24,7 +24,7 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
    assert( #args == #parts - 1, "not enough arguments")
    local command_str, j = "", 1
    while j < #parts do
-      local val = self.conn:escape(tostring(args[j]))
+      local val = self.db:escape(tostring(args[j]))
       if type(val) == "string" then val = "'" .. val .. "'" end
       command_str = command_str .. parts[j] .. val
       j = j + 1
@@ -34,13 +34,13 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
 end
 
 function Sql:_cursor(command_str)
-   local cursor = self.conn:execute(command_str)
+   local cursor = self.db:execute(command_str)
    if cursor then
       return cursor
    else  -- Close it and try again.
-      self.conn:close()
-      self.conn = sqlite3:connect(self.filename)
-      return self.conn:execute(command_str)
+      self.db:close()
+      self.db = sqlite3:connect(self.filename)
+      return self.db:execute(command_str)
    end
 end
 
