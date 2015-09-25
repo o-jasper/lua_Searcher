@@ -4,18 +4,23 @@
 local Sql_port = require "Searcher.Sql.luasql_port"  -- TODO port the luakit one?
 local apply_subst = require "o_jasper_common.apply_subst"
 
-local Sql = { init = Sql_port.init, compile = Sql_port.compile, exec = Sql_port.exec }
+local Sql = { compile = Sql_port.compile, exec = Sql_port.exec }
 Sql.__index = Sql
+Sql.__name = "Searcher.Sql"
 
-function Sql.new(self)
-   self = setmetatable(self, Sql)
-   self:init()
+function Sql:new(new)
+   new = setmetatable(new or {}, self)
+   new:init()
+   return new
+end
+
+function Sql:init()
+   Sql_port.init(self)
    self.repl = self.repl or {}
    self.cmd_strs = self.cmd_strs or {}
    local function index(_, key) return self:cmd(key) end
    self.cmds = setmetatable({}, { __index = index })
    self.memoize = self.memoize or {}
-   return self
 end
 
 function Sql:cmd(name)

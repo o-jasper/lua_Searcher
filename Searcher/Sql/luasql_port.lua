@@ -21,7 +21,8 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
    if not args or #args == 0 then return sql_command end
    local command_str = ""
    local parts = string_split(sql_command, "?")
-   assert( #args == #parts - 1, "not enough arguments")
+   assert( #args == #parts - 1, string.format("Wrong number of arguments %d != need %d",
+                                              #args, #parts - 1))
    local command_str, j = "", 1
    while j < #parts do
       local val = self.db:escape(tostring(args[j]))
@@ -50,7 +51,7 @@ end
 
 -- Produces an entire list immediately.
 local function list_cursor(cursor)
-   if not cursor or type(cursor) == "number" then return cursor end
+   if not cursor or type(cursor) == "number" then return {} end
 
    local ret, new = {}, {}
    while cursor:fetch(new, "a") do

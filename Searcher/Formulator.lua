@@ -13,12 +13,18 @@ local string_split = require "o_jasper_common.string_split"
 
 local Formulator = {}
 Formulator.__index = Formulator
+Formulator.__name = "SearcherS.Formulator"
 
 -- Important: gotta be a _new_ one!
 -- Note: use this is you want to "build" a search.
 -- Otherwise the state is hanging around. (you can use it just the same)
-function Formulator.new(self)  -- TODO rename to `copy`
-   self = self or {}
+function Formulator:new(new)  -- TODO rename to `copy`
+   new = setmetatable(new or {}, self)
+   new:init()
+   return new
+end
+
+function Formulator:init()
    self.values = self.values or {}
    -- TODO multiple table names? 
    self.input = {}
@@ -27,7 +33,6 @@ function Formulator.new(self)  -- TODO rename to `copy`
       self.next_c = self.next_c or "WHERE"
    end
    self.c = self.c or "AND"
-   self = setmetatable(self, Formulator)
    if not self.cmd then
       self.cmd = {}
       self:select_table()
@@ -150,7 +155,7 @@ function Formulator:tags(tags, taggingsname, tagname, w)
    local cmd = string.format([[%sEXISTS (
 SELECT * FROM %s
 WHERE to_id == m.id]], w or "", taggingsname or self.values.taggings or "tags")
-   local f = Formulator.new{cmd = {cmd}, next_c=false} --:copy({c="AND", c_next=false})
+   local f = Formulator:new{cmd = {cmd}, next_c=false} --:copy({c="AND", c_next=false})
    f:equal(tagname or self.values.tagname or "name", tags)
    f:addstr(")")
    self:include(f)

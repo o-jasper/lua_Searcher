@@ -1,4 +1,3 @@
-
 local Sql = require "Searcher.Sql"
 
 local cmds = {
@@ -14,7 +13,7 @@ ORDER BY x]],
 }
 
 local repl = {main = "list"}
-local s = Sql.new{filename = ":memory:", cmd_strs=cmds, repl=repl}
+local s = Sql:new{filename = ":memory:", cmd_strs=cmds, repl=repl}
 
 s.cmds.create()
 

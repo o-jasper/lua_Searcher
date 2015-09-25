@@ -1,6 +1,6 @@
 local Formulator = require "Searcher.Formulator"
 
-local f = Formulator.new({values={textlike={"text"}}})
+local f = Formulator:new({values={textlike={"text"}}})
 
 f:text_like("miauw")
 f:lt("ska", 23)
@@ -14,7 +14,7 @@ ska < ?
 AND
 time > ?]])
 
-local f = Formulator.new({values={textlike={"text"}}})
+local f = Formulator:new({values={textlike={"text"}}})
 f:text_like("miauw")
 f:tags({"miauw", "mew"})
 
