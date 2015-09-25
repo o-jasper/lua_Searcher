@@ -62,12 +62,12 @@ local function list_cursor(cursor)
    return ret
 end
 
-function Sql:exec(sql_command, args)
-   return list_cursor(Sql._cursor(self, Sql.command_string(self, sql_command, args)))
+function Sql:exec(sql_command, ...)
+   return list_cursor(Sql._cursor(self, Sql.command_string(self, sql_command, {...})))
 end
 
 function Sql:compile(sql_command)  -- Doesnt actually compile anything..
-   return function(...) return self:exec(sql_command, {...}) end
+   return function(...) return self:exec(sql_command, ...) end
 end
 
 local c = require "o_jasper_common"

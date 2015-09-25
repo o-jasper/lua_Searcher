@@ -9,7 +9,7 @@ An sql table searcher would have:
   `":memory:"` will make one in-memory.
 * `:compile(sql_command)` returning an object that is callable to
   effectively `:exec` it with commands.
-* `:exec(sql_command, args)`
+* `:exec(sql_command, args...)`
 
 If `:compile(..)` actually does something, then one can consider memoizing it.
 Otherwise it is just convenient accessing of commands.
