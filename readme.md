@@ -37,8 +37,8 @@ This should have no idea about the db *or* the parsing.
   `initial` is the initial sql command to start with.
    + `values.order_by` indicates how to order defaultly, `values.order_way`
      the direction(`"ASC"` or `"DESC"`, default latter)
-* `:search(parsed_list)` actually does a search, changing the state of the thing.
-* `:finish()` finishes the searching, adding some sorting and stuff, if specified.
+* `:search(parsed_list)` "adds a search".
+* `:finish()` finishes the query creation adding some sorting and stuff, if specified.
 * `:sql_pattern()` returns the sql_pattern at that point.
 * `:sql_values()` returns the values at that point.
 * ... many more, that are specific to creating `match_funs`
@@ -52,11 +52,11 @@ complicated stuff, go to the sql code itself.
   
   `matchable` is to be implied from `matchfuns`, except only to the extent that
   order-dependence matters.
-  
+
 * `:exec`, `:compile`, `:cmd` in there.
-* `:finish`, `:sql_pattern`, `:sql_values` in there.
-* `:sql(search_string)` produces SQL code.
-* `:result(search_string)` executes it aswel.
+* `:search`, `:finish`. `sql_pattern`, `:sql_values` in there
+
+* Only additional; `:result()` in there, finishing and executing the search.
 
 # Installing
 Either add the package directory to `package.path` or
