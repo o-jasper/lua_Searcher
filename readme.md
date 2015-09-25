@@ -58,6 +58,12 @@ complicated stuff, go to the sql code itself.
 * `:sql(search_string)` produces SQL code.
 * `:result(search_string)` executes it aswel.
 
+# Installing
+Either add the package directory to `package.path` or
+symlink `package_dir/Searcher/` into someting accessible from `package.path`.
+
+Depends on lua sql, and hopefully works in luakit.
+
 # TODO
 
 * Searcher throwing it together does not exist yet.
