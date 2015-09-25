@@ -13,4 +13,8 @@ function Searcher:init()
    Formulator.init(self)
 end
 
+function Searcher:result()
+   return self:exec(self:sql_pattern(), unpack(self:sql_values()))
+end
+
 return Searcher
