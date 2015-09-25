@@ -14,6 +14,7 @@ function Searcher:init()
 end
 
 function Searcher:result()
+   self:finish()
    return self:exec(self:sql_pattern(), unpack(self:sql_values()))
 end
 
