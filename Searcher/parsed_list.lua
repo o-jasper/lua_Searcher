@@ -1,5 +1,5 @@
 
-local string_split = require "o_jasper_common.string_split"
+local string_split = require "Searcher.util.string_split"
 
 -- Splits things up by whitespace and quotes.
 local function _portions(str)
@@ -19,13 +19,14 @@ local function parsed_list(matchable, search_string)
    for _, el in pairs(_portions(search_string)) do
       local done = false
       for _, m in pairs(matchable) do
-         if string.sub(el, 1, #m) == m then -- Match.
-            if #el == #m then
+         local _, n = string.find(el, m)
+         if n then -- Match.
+            if #el == n then
                dibs = m  -- All of them, keep.
                done = true
                break
             else
-               table.insert(ret, {m=m, v=string.sub(el, #m + 1)})
+               table.insert(ret, {m=m, v=string.sub(el, n + 1)})
                done = true
                break
             end
