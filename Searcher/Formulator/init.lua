@@ -9,8 +9,6 @@
 --  Likely good to rename the concept, and have ability to use the concept
 --   multiple times, the same way.
 
-local string_split = require "o_jasper_common.string_split"
-
 local Formulator = {}
 Formulator.__index = Formulator
 Formulator.__name = "SearcherS.Formulator"
@@ -80,16 +78,23 @@ function Formulator:select_table(table_name)
                    self.values.mainvar or "m"))
 end
 
--- Lots of stuff to build searches from.
-function Formulator:equal_1(which, input)
-   assert(type(input) == "string")
-   self:extcmd("%s == ?", which)
-   self:inp(input)
+-- Checks if things not being sneaked in via names.
+local function value_check(which)
+   return #which < 128 and string.find(which, "^[%w_]+$")
 end
 
-function Formulator:equal_list(which, input)
+-- Lots of stuff to build searches from.
+function Formulator:equal_1(which, input, invert)
+   if value_check(which) then
+      assert(type(input) == "string")
+      self:extcmd("%s%s == ?", invert and "NOT " or "", which)
+      self:inp(input)
+   end
+end
+
+function Formulator:equal_list(which, input, invert)
    assert(type(input) == "table")
-   local str = {string.format("%s IN (?", which)}
+   local str = {string.format("%s%s IN (?", invert and "NOT " or "", which)}
    for i, f in pairs(input) do
       self:inp(f)
       if i ~= 1 then table.insert(str, "?") end
@@ -97,22 +102,28 @@ function Formulator:equal_list(which, input)
    self:extcmd(table.concat(str, ", ") .. ")")
 end
 
-function Formulator:equal(which, input)
-   if type(input) == "table" then
-      if #input > 1 then return self:equal_list(which, input) end
-      input = input[1]
+function Formulator:equal(which, input, invert)
+   if value_check(which) then
+      if type(input) == "table" then
+         if #input > 1 then return self:equal_list(which, input, invert) end
+         input = input[1]
+      end
+      return self:equal_1(which, input, invert)
    end
-   return self:equal_1(which, input)
 end
 
--- Value less/greater then ..
-function Formulator:lt(which, value)  -- TODO
-   self:extcmd([[%s < ?]], which)
-   self:inp(value)
+-- Value less/greater then ..  TODO or-equal?
+function Formulator:lt(which, value)
+   if value_check(which) then
+      self:extcmd([[%s < ?]], which)
+      self:inp(value)
+   end
 end
-function Formulator:gt(which, value)  -- TODO
-   self:extcmd([[%s > ?]], which)
-   self:inp(value)
+function Formulator:gt(which, value)
+   if value_check(which) then
+      self:extcmd([[%s > ?]], which)
+      self:inp(value)
+   end
 end
 -- Time is after/before ..
 function Formulator:after(time)
@@ -123,26 +134,35 @@ function Formulator:before(time)
 end
 
 -- Add a like command.
-function Formulator:like(what, value)
-   self:extcmd([[%s LIKE ?]], what)
-   self:inp(value)
+function Formulator:like(which, value, invert)
+   if value_check(which) then
+      self:extcmd([[%s %sLIKE ?]], which, invert and "NOT " or "")
+      self:inp(value)
+   end
 end
-function Formulator:not_like(value, what)
-   self:extcmd([[%s NOT LIKE ?]], what)
-   self:inp(value)
+function Formulator:not_like(which, value)
+   return self:like(which, value, true)
 end
 
 -- a LIKE command on all textlike parts.
 function Formulator:text_like(search, n)
-   for i, what in pairs(self.values.textlike) do
-      (n and self.not_like or self.like)(self, what, search)
+   for i, which in pairs(self.values.textlike) do
+      self:like(which, search, n)
    end
 end
 
--- Search wordm any textlike. (does that LIKE command with '%' around)
+-- Search word any textlike. (does that LIKE command with '%' around)
 function Formulator:text_sw(search, n)
    if #search > 0 then
       self:text_like('%' .. search .. '%', n)
+   end
+end
+
+Formulator.match_funs = {}
+
+function Formulator.match_funs:default(state, m, text)
+   if text and #text > 0 then
+      return self:text_sw(text)
    end
 end
 
@@ -171,13 +191,17 @@ function Formulator:search(parsed_list)
    local match_funs = self.match_funs
    
    for i, el in pairs(parsed_list) do
-      local fun = (match_funs[el.m] or match_funs.default)
+      local fun = match_funs[el.m] or match_funs.default
+      assert(type(fun) == "function",
+             string.format("Dont have a function for el.m; %s", el.m))
       fun(self, state, el.m, el.v)
    end
    self:tags(state.tags)
    self:not_tags(state.not_tags)
+
    if before_t then self:before(state.before_t) end
    if after_t  then self:after(state.after_t) end
+
    if state.order_by then
       self.dont_auto_order = true
       self:order_by(state.order_by, state.order_by_way)
@@ -200,15 +224,16 @@ end
 -- Limiting the number of results.
 function Formulator:limit(fr, cnt) 
    self.c = ""
+   self.next_c = ""
    self:extcmd("LIMIT ?, ?")
    self:inp(fr)
    self:inp(cnt)
 end
 
 function Formulator:finish()  -- Add requested searches.
-   if self.got_limit then
+   if self.got_limit then  -- TODO tags here instead?..
       if #self.got_limit == 2 then
-         self:limit(self.got_limit[1], self.got_limit[2])
+         self:limit(unpack(self.got_limit))
       else
          self:limit(0, self.got_limit[1])
       end
@@ -223,6 +248,13 @@ end
 
 function Formulator:sql_values()
    return self.input
+end
+
+local parsed_list = require "Searcher.parsed_list"
+function Formulator:search_str(str)
+   local list = parsed_list(self.matchable, str)
+   assert(self.matchable, "Need to indicate what keywords count.")
+   return self:search(list)
 end
 
 return Formulator
