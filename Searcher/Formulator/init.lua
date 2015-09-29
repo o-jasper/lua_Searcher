@@ -205,6 +205,8 @@ function Formulator:search(parsed_list)
    if state.order_by then
       self.dont_auto_order = true
       self:order_by(state.order_by, state.order_by_way)
+   elseif self.values.order_by then
+      self:order_by(self.values.order_by, self.values.order_way)
    end
 end
 
@@ -212,13 +214,8 @@ end
 function Formulator:order_by(what, way)
    if type(what) == "table" then what = table.concat(what, ", ") end
    self.c = ""
+   self.next_c = ""
    self:extcmd("ORDER BY %s %s", what, way or "DESC")
-end
-
-function Formulator:auto_by(self)
-   if self.values.order_by then
-      self:order_by(self.values.order_by, self.values.order_way)
-   end
 end
 
 -- Limiting the number of results.
