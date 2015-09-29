@@ -6,14 +6,14 @@ local sqlite3 = require("luasql.sqlite3").sqlite3("")
 
 local Sql = {}
 
-function Sql:init()
-   self.db = sqlite3:connect(self.filename)
+function Sql:new(new)
+   new = setmetatable(new, self)
+   new:init()
+   return new
 end
 
-function Sql.new(self)
-   self = setmetatable(self, Sql)
-   self:init()
-   return self
+function Sql:init()
+   self.db = sqlite3:connect(self.filename)
 end
 
 -- NOTE: high security risk zone.
