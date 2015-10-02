@@ -4,7 +4,7 @@ API.
 
 An sql table searcher would have:
 
-* `.new{filename=, db=..}` makes a new object, best to supply just `filename`,
+* `Sql:new{filename=, db=..}` makes a new object, best to supply just `filename`,
   it'll get you the database.(-connection)
   `":memory:"` will make one in-memory.
 * `:compile(sql_command)` returning an object that is callable to
@@ -14,7 +14,7 @@ An sql table searcher would have:
 If `:compile(..)` actually does something, then one can consider memoizing it.
 Otherwise it is just convenient accessing of commands.
 
-* To `.new` add `repl=` replacements in the commands and `cmd_strs=`
+* To `:new` add `repl=` replacements in the commands and `cmd_strs=`
   a key-value store with either string(just replace stuff) or function
   (return the string with the object as input) values.
 * `:cmd(name)` calls the command, and memoizes the corresponding
@@ -62,10 +62,32 @@ complicated stuff, go to the sql code itself.
 Either add the package directory to `package.path` or
 symlink `package_dir/Searcher/` into someting accessible from `package.path`.
 
-Depends on lua sql, and hopefully works in luakit.
+Depends on [luasql](https://github.com/keplerproject/luasql) for regular lua,
+and TODO is using [LJIT2SQLite](https://github.com/Wiladams/LJIT2SQLite) for luajit.
+
+Luakit has its own variant too.
 
 # TODO
 
-* Searcher throwing it together does not exist yet.
+* Luajit needs port of [LJIT2SQLite](https://github.com/Wiladams/LJIT2SQLite).
 
-* Database part should work as described.. work out whether the rest does.
+* Get luakit variant to work too.
+
+* Readme improvement?
+    
+## Lua Ring
+
+* [lua_Searcher](https://github.com/o-jasper/lua_Searcher) sql formulator including
+  search term, and Sqlite bindings.
+
+* [page_html](https://github.com/o-jasper/page_html) provide some methods on an object,
+  get a html page.(with js)
+
+* [storebin](https://github.com/o-jasper/storebin) converts trees to binary, same
+  interfaces as json package.(plus `file_encode`, `file_decode`)
+  
+* [PegasusJs](https://github.com/o-jasper/PegasusJs), easily RPCs javascript to
+  lua. In pegasus.
+
+* [tox_comms](https://github.com/o-jasper/tox_comms/), lua bindings to Tox and
+  bare bot.
