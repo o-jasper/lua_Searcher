@@ -1,6 +1,6 @@
 -- Makes luasql behave the same as the luakit one.
 
-local string_split = require "o_jasper_common.string_split"
+local string_split = require "Searcher.util.string_split"
 
 local sqlite3 = require("luasql.sqlite3").sqlite3("")
 
@@ -25,6 +25,7 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
                                               #args, #parts - 1))
    local command_str, j = "", 1
    while j < #parts do
+      -- This is why here; it comes with escaping.
       local val = self.db:escape(tostring(args[j]))
       if type(val) == "string" then val = "'" .. val .. "'" end
       command_str = command_str .. parts[j] .. val
@@ -66,10 +67,4 @@ function Sql:exec(sql_command, ...)
    return list_cursor(Sql._cursor(self, Sql.command_string(self, sql_command, {...})))
 end
 
-function Sql:compile(sql_command)  -- Doesnt actually compile anything..
-   return function(...) return self:exec(sql_command, ...) end
-end
-
-local c = require "o_jasper_common"
-
-return c.metatable_of(Sql)
+return Sql
