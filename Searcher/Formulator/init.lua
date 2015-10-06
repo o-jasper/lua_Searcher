@@ -201,25 +201,21 @@ function Formulator:search(parsed_list)
 
    if before_t then self:before(state.before_t) end
    if after_t  then self:after(state.after_t) end
-
-   if state.order_by then
-      self.dont_auto_order = true
-      self:order_by(state.order_by, state.order_by_way)
-   elseif self.values.order_by then
-      self:order_by(self.values.order_by, self.values.order_way)
-   end
 end
 
 -- Sorting it.
 function Formulator:order_by(what, way)
-   if type(what) == "table" then what = table.concat(what, ", ") end
-   self.c = ""
-   self.next_c = ""
-   self:extcmd("ORDER BY %s %s", what, way or "DESC")
+   assert(not self.got_order_by)
+   self.got_order_by = {what, way}
 end
 
 -- Limiting the number of results.
 function Formulator:limit(fr, cnt) 
+   assert(not self.got_limit)
+   self.got_limit = {fr, cnt}
+end
+
+function Formulator:apply_limit(fr, cnt)
    self.c = ""
    self.next_c = ""
    self:extcmd("LIMIT ?, ?")
@@ -227,14 +223,29 @@ function Formulator:limit(fr, cnt)
    self:inp(cnt)
 end
 
+function Formulator:apply_order_by(what, way)
+   if type(what) == "table" then what = table.concat(what, ", ") end
+   self.c = ""
+   self.next_c = ""
+   self:extcmd("ORDER BY %s %s", what, way or "DESC")
+end
+
 function Formulator:finish()  -- Add requested searches.
-   if self.got_limit then  -- TODO tags here instead?..
-      if #self.got_limit == 2 then
-         self:limit(unpack(self.got_limit))
-      else
-         self:limit(0, self.got_limit[1])
+   if not self.finished then
+      self.finished = true
+      if self.got_order_by then
+         self:apply_order_by(unpack(self.got_order_by))
+      elseif self.values.order_by then
+         self:apply_order_by(self.values.order_by, self.values.order_way)
       end
-      self.got_limit = nil
+      if self.got_limit then  -- TODO tags here instead?..
+         if #self.got_limit == 2 then
+            self:apply_limit(unpack(self.got_limit))
+         else
+            self:apply_limit(0, self.got_limit[1])
+         end
+         self.got_limit = nil
+      end
    end
 end
 
