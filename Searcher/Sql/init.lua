@@ -4,7 +4,7 @@
 local Sql_port
 pcall(function() Sql_port = require "Searcher.Sql.luasql_port" end)
 if not Sql_port then
-   Sql_port = require "Searcher.Sql.LJIT2SQLite"
+   Sql_port = require "Searcher.Sql.luaffi_port"
 end
 
 local apply_subst = require "page_html.util.apply_subst"
