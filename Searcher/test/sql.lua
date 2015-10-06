@@ -24,10 +24,10 @@ while i < 100 do
    s.cmds.add(add)
    i = i + 1
 end
-
 table.sort(list)
 local sql_list = s.cmds.listall_sort()
+
 for i, el in ipairs(list) do
    local val = sql_list[i]
-   assert(val.x == el, string.format("%s ~= %s", val.x, el))
+   assert(val.x == el, string.format("%s ~= %s (%d)", val.x, el, i))
 end
