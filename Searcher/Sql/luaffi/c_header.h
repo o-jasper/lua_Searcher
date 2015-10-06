@@ -1,4 +1,3 @@
-return [[
 const char sqlite3_version[];
 const char *sqlite3_libversion(void);
 const char *sqlite3_sourceid(void);
@@ -820,4 +819,3 @@ struct sqlite3_rtree_geometry {
   void *pUser;
   void (*xDelUser)(void *);
 };
-]]
