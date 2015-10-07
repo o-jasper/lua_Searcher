@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS list (
 );]],
    listall = "SELECT * FROM {%main}",
    listall_sort = [[SELECT * FROM {%main}
-ORDER BY x]],
-   listrange = "SELECT * FROM {%main} WHERE x > ? AND x < ?",
-   add = "INSERT INTO {%main} VALUES (?)",
+ORDER BY x;]],
+   listrange = "SELECT * FROM {%main} WHERE x > ? AND x < ?;",
+   add = "INSERT INTO {%main} VALUES (?);",
 }
 
 local repl = {main = "list"}
@@ -25,9 +25,11 @@ while i < 100 do
    i = i + 1
 end
 table.sort(list)
-local sql_list = s.cmds.listall_sort()
 
-for i, el in ipairs(list) do
-   local val = sql_list[i]
-   assert(val.x == el, string.format("%s ~= %s (%d)", val.x, el, i))
+for _ = 1,1 do
+   local sql_list = s.cmds.listall_sort()
+   for i, el in ipairs(list) do
+      local val = sql_list[i]
+      assert(val.x == el, string.format("%s ~= %s (%d)", val.x, el, i))
+   end
 end
