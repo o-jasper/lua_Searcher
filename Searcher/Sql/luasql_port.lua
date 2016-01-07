@@ -26,8 +26,10 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
    local command_str, j = "", 1
    while j < #parts do
       -- This is why here; it comes with escaping.
-      local val = self.db:escape(tostring(args[j]))
-      if type(val) == "string" then val = "'" .. val .. "'" end
+      local val = args[j]
+      if type(val) == "string" then
+         val = "'" .. self.db:escape(tostring(args[j])) .. "'"
+      end
       command_str = command_str .. parts[j] .. val
       j = j + 1
    end
