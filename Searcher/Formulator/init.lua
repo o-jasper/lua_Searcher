@@ -30,7 +30,7 @@ function Formulator:init()
    if self.next_c ~= false then
       self.next_c = self.next_c or "WHERE"
    end
-   self.c = self.c or "AND"
+   self.c = self.c or "OR"
    if not self.cmd then
       self.cmd = {}
       self:select_table()
