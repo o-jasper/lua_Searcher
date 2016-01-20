@@ -47,14 +47,17 @@ function This:form(search_term, state)
    return form
 end
 
-function This:produce(search_term, state)
+This.limit = { 1, 50 }
+
+function This:produce(search_term, state, limit)
    assert(self.db)
    local form, list = self:form(search_term, state), nil
+   form:limit(unpack(limit or self.limit))
    pcall(function()
          list = self.db:exec(form:sql_pattern(), unpack(form:sql_values()))
    end)
 
-   return list or {{"FAIL"}}
+   return list or {{"FAIL"}}, form
 end
 
 return This
