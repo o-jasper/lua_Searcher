@@ -30,7 +30,7 @@ function Sql:command_string(sql_command, args)  -- TODO question marks and argum
       if type(val) == "string" then
          val = "'" .. self.db:escape(tostring(args[j])) .. "'"
       end
-      command_str = command_str .. parts[j] .. val
+      command_str = command_str .. parts[j] .. tostring(val)
       j = j + 1
    end
    command_str = command_str .. parts[j]
