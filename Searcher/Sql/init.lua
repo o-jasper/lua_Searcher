@@ -29,6 +29,7 @@ function Sql:init()
    self.repl = self.repl or {}
    self.cmd_strs = self.cmd_strs or {}
 
+   -- Fancy access.
    local function index(_, key) return self:cmd(key) end
    self.cmds = setmetatable({}, { __index = index })
 
@@ -68,5 +69,14 @@ function Sql:cmd(name)
       return got
    end
 end
+
+--function Sql:class_cmd_add(name, sql)
+--   self.cmd_strs[name] = sql
+--end
+--
+--function Sql:class_cmd_add_w_fun(name, sql, fun_name)
+--   self:class_cmd_add(name, sql)
+--   self[fun_name or name] = function(s, ...) return s:cmd(name)(...) end
+--end
 
 return Sql
