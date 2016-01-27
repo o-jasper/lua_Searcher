@@ -30,10 +30,11 @@ This.allow_direct = {
 This.search_term = ""
 
 function This:form(search_term, state)
-   local search_term, state = search_term or "", state or {}
+   local search_term, state = search_term or self.search_term, state or {}
+   assert(type(search_term == "string"))
 
    local form = self.Formulator:new()
-   form:search_str(search_term or self.search_term)
+   form:search_str(search_term)
 
    -- Do the search terms the state wants to add.
    for method, args in pairs(state.direct or {}) do
