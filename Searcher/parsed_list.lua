@@ -14,9 +14,11 @@ local function _portions(str)
    return list
 end
 
-local function parsed_list(matchable, search_string)
+local function parsed_list(matchable, search_str)
+   assert(type(search_str) == "string",
+          string.format("String-to-parse not a string instead; %s", search_str))
    local ret, dibs = {}, false
-   for _, el in pairs(_portions(search_string)) do
+   for _, el in pairs(_portions(search_str)) do
       local done = false
       for _, m in pairs(matchable) do
          local _, n = string.find(el, m)
