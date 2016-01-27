@@ -26,7 +26,7 @@ while i < 100 do
 end
 table.sort(list)
 
-for _ = 1,1 do
+for _ = 1,10 do
    local sql_list = s.cmds.listall_sort()
    for i, el in ipairs(list) do
       local val = sql_list[i]
