@@ -46,4 +46,11 @@ return function(values, mf, matchable)
          if t then self:gt("access", t) end
       end)
    end
+
+   for k,v in pairs(values.tags or {}) do
+      add(k .. ":", function(self, _, m, v)
+         self:tags(v, "bookmark_tags")
+      end)
+   end
+   -- TODO tags.
 end
