@@ -211,7 +211,7 @@ end
 
 -- Limiting the number of results.
 function Formulator:limit(fr, cnt) 
-   assert(not self.got_limit)
+   assert(not self.got_limit, "Cannot add a limit twice")
    self.got_limit = {fr, cnt}
 end
 
@@ -250,11 +250,11 @@ function Formulator:finish()  -- Add requested searches.
 end
 
 function Formulator:sql_pattern()
-   self:finish()
-   return table.concat(self.cmd, "\n") 
+   return table.concat(self.cmd, "\n"), self.finished
 end
 
 function Formulator:sql_values()
+   assert(self.finished, "Cannot provide values while unfinished!")
    return self.input
 end
 
