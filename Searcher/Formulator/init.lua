@@ -49,14 +49,15 @@ end
 
 -- Stuff to help me construct queries based on searches.
 function Formulator:extcmd(str, ...)
+   local use_str = string.format(str, ...)
    if self.next_c then
-      table.insert(self.cmd, self.next_c)
+      table.insert(self.cmd, self.next_c .. " " .. use_str)
       self.next_c = false
    else
-      table.insert(self.cmd, self.c)
+      table.insert(self.cmd, self.c .. " " .. use_str)
    end
-   table.insert(self.cmd, string.format(str, ...))
 end
+
 -- A piece of input.
 function Formulator:inp(what)
    if type(what) ~= "table" then
@@ -146,9 +147,12 @@ end
 
 -- a LIKE command on all textlike parts.
 function Formulator:text_like(search, n)
+   local list = {}
    for i, which in pairs(self.values.textlike) do
       self:like(which, search, n)
+      table.insert(list, table.remove(self.cmd))
    end
+   table.insert(self.cmd, table.concat(list, " "))
 end
 
 -- Search word any textlike. (does that LIKE command with '%' around)
