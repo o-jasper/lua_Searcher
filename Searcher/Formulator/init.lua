@@ -258,6 +258,11 @@ function Formulator:sql_values()
    return self.input
 end
 
+local sql_command_str = require "Searcher.Sql.command_str"
+function Formulator:sql()
+   return sql_command_str(self:sql_pattern(), self:sql_values())
+end
+
 local parsed_list = require "Searcher.parsed_list"
 function Formulator:search_str(str)
    local list = parsed_list(self.matchable, str)
