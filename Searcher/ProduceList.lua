@@ -29,7 +29,13 @@ This.allow_direct = {
 }
 This.search_term = ""
 
-function This:form(search_term, state, limit)
+This.limit = { 0, 50 }
+
+function This:form_additional(form, state, _)
+   form:limit(unpack(state.limit or self.limit))
+end
+
+function This:form(search_term, state)
    local search_term, state = search_term or self.search_term, state or {}
    assert(type(search_term == "string"))
 
@@ -45,16 +51,14 @@ function This:form(search_term, state, limit)
       end
    end
 
-   form:limit(unpack(limit or self.limit))
+   self:form_additional(form, state, search_term)
 
    return form
 end
 
-This.limit = { 0, 50 }
-
-function This:produce(search_term, state, limit)
+function This:produce(search_term, state)
    assert(self.db)
-   local form, list = self:form(search_term, state, limit), nil
+   local form, list = self:form(search_term, state), nil
    form:finish()
 
    pcall(function()
