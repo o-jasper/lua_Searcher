@@ -32,7 +32,7 @@ function Sql:command_string(sql_pattern, args)  -- TODO question marks and argum
    local use_args = {}
    for _, arg in ipairs(args) do
       if type(arg) == "string" then
-         table.insert(use_args, [["]] .. self.db:escape(tostring(arg)) .. [["]])
+         table.insert(use_args, self.db:escape(tostring(arg)))
       else
          table.insert(use_args, arg)
       end

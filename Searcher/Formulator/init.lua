@@ -5,10 +5,6 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
--- TODO taggings can be used for similar purposes..
---  Likely good to rename the concept, and have ability to use the concept
---   multiple times, the same way.
-
 local Formulator = {}
 Formulator.__index = Formulator
 Formulator.__name = "SearcherS.Formulator"
@@ -60,11 +56,8 @@ end
 
 -- A piece of input.
 function Formulator:inp(what)
-   if type(what) ~= "table" then
-      what = tostring(what)
-   end
-   assert(type(what) == "string",
-          string.format("E(BUG): Not a string %s", what))
+   assert(type(what) ~= "table",
+          string.format("E(BUG): tables not allowed: %s", what))
    table.insert(self.input, what)
 end
 -- Manually add string.
@@ -150,7 +143,7 @@ function Formulator:text_like(search, n)
    local list = {}
    for i, which in pairs(self.values.textlike) do
       self:like(which, search, n)
-      table.insert(list, table.remove(self.cmd))
+      table.insert(list, table.remove(self.cmd)) -- NOTE: rather stateful..
    end
    table.insert(self.cmd, table.concat(list, " "))
 end
