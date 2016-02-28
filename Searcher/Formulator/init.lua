@@ -5,9 +5,12 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
+-- TODO this just sucks.. Just need to make a tree proper.
+-- (and i shouldah realized before)
+
 local Formulator = {}
 Formulator.__index = Formulator
-Formulator.__name = "SearcherS.Formulator"
+Formulator.__name = "Searcher.Formulator"
 
 -- Important: gotta be a _new_ one!
 -- Note: use this is you want to "build" a search.
@@ -23,14 +26,12 @@ function Formulator:init()
    -- TODO multiple table names? 
    self.input = {}
    self.initial = nil
-   if self.next_c ~= false then
-      self.next_c = self.next_c or "WHERE"
-   end
-   self.c = self.c or "OR"
    if not self.cmd then
       self.cmd = {}
       self:select_table()
+      self.no_where = true
    end
+   self.mode = self.mode or "AND"
    return self
 end
 
@@ -43,15 +44,37 @@ function Formulator:include(input)
    end
 end
 
+function Formulator:mode_and()
+   if self.mode == "OR" then
+      table.insert(self.cmd, ")")
+   end
+   self.mode = "AND"
+end
+
+function Formulator:mode_or()
+   if self.mode == "AND" then
+      self:extcmd("(")
+      self.omit_mode_1 = true
+   end
+   self.mode = "OR"
+end
+
 -- Stuff to help me construct queries based on searches.
 function Formulator:extcmd(str, ...)
    local use_str = string.format(str, ...)
-   if self.next_c then
-      table.insert(self.cmd, self.next_c .. " " .. use_str)
-      self.next_c = false
+   if self.no_where then
+      table.insert(self.cmd, "WHERE " .. use_str)
+      self.no_where = nil
+   elseif self.omit_mode_1 then
+      table.insert(self.cmd, use_str)
+      self.omit_mode_1 = nil
    else
-      table.insert(self.cmd, self.c .. " " .. use_str)
+      table.insert(self.cmd, self.mode .. " " .. use_str)
    end
+end
+
+function Formulator:extcmd_nologic(str, ...)
+   table.insert(self.cmd, string.format(str, ...))
 end
 
 -- A piece of input.
@@ -140,12 +163,14 @@ end
 
 -- a LIKE command on all textlike parts.
 function Formulator:text_like(search, n)
-   local list = {}
+
+   local switch_mode = not (n or self.mode == "OR")
+
+   if switch_mode then self:mode_or() end
    for i, which in pairs(self.values.textlike) do
       self:like(which, search, n)
-      table.insert(list, table.remove(self.cmd)) -- NOTE: rather stateful..
    end
-   table.insert(self.cmd, table.concat(list, " "))
+   if switch_mode then self:mode_and() end
 end
 
 -- Search word any textlike. (does that LIKE command with '%' around)
@@ -159,7 +184,8 @@ Formulator.match_funs = {}
 
 function Formulator.match_funs:default(state, m, text)
    if text and #text > 0 then
-      return self:text_sw(text)
+      self:text_sw(text)
+      return true
    end
 end
 
@@ -184,20 +210,32 @@ end
 
 -- The actual search build from it.
 function Formulator:search(parsed_list)
-   local state = {n=false, tags={}, not_tags={}, before_t=nil, after_t=nil, reset=true}
+   local state = {n=false, tags={}, not_tags={}, before_t=nil, after_t=nil, reset=true,
+                  ["or"] = -1 }
    local match_funs = self.match_funs
-   
-   for i, el in pairs(parsed_list) do
+
+   self:mode_and()
+
+   for i, el in ipairs(parsed_list) do
       local fun = match_funs[el.m] or match_funs.default
       assert(type(fun) == "function",
              string.format("Dont have a function for el.m; %s", el.m))
       fun(self, state, el.m, el.v)
+
+      if state["or"] == 0 then
+         self:mode_and()
+      elseif state["or"] > 0 then
+         state["or"] = state["or"] - 1
+      end
    end
-   self:tags(state.tags)
-   self:not_tags(state.not_tags)
+
+   self:mode_and()
 
    if before_t then self:before(state.before_t) end
    if after_t  then self:after(state.after_t) end
+
+   self:tags(state.tags)
+   self:not_tags(state.not_tags)
 end
 
 -- Sorting it.
@@ -215,7 +253,7 @@ end
 function Formulator:apply_limit(fr, cnt)
    self.c = ""
    self.next_c = ""
-   self:extcmd("LIMIT ?, ?")
+   self:extcmd_nologic("LIMIT ?, ?")
    self:inp(fr)
    self:inp(cnt)
 end
@@ -224,7 +262,7 @@ function Formulator:apply_order_by(what, way)
    if type(what) == "table" then what = table.concat(what, ", ") end
    self.c = ""
    self.next_c = ""
-   self:extcmd("ORDER BY %s %s", what, way or "DESC")
+   self:extcmd_nologic("ORDER BY %s %s", what, way or "DESC")
 end
 
 function Formulator:finish()  -- Add requested searches.

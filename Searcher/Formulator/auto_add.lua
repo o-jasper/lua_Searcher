@@ -11,27 +11,47 @@ return function(values, mf, matchable)
    for _, name in pairs(values.textable or {}) do
       add("%-?" .. name .. "=", function(self, _, m, v)
          self:equal(name, v, inv(m))
+         return true
       end)
       add(name .. "!=", function(self, _, m, v)
          self:equal(name, v, true)
+         return true
       end)
       add("%-?" .. name .. "like:", function(self, _, m, v)
          self:like(name, v, inv(m))
+         return true
       end)
       add("%-?" .. name .. ":", function(self, _, m, v)
          self:like(name, "%" .. v .. "%", inv(m))
+         return true
       end)
    end
+
+   add("like:", function(self, _, m,v)
+       self:text_like(v)
+       return true
+   end)
+
+   local function orfun(self, state, m,v)
+      state["or"] = tonumber(string.match(v, "[%d]+")) or 2
+      self:mode_or()
+      return true
+   end
+   add("or:", orfun)
+   add("OR",  orfun)
 
    for _, name in pairs(values.comparable or {}) do
       add(name .. "lt:", function(self, _, m, v)
          self:lt(name, w_magnitude_interpret(v))
+         return true
       end)
       add(name .. "gt:", function(self, _, m, v)
          self:gt(name, w_magnitude_interpret(v))
+         return true
       end)
       add(name .. "!?=", function(self, _, m, v)
          self:equal(name, v, inv(m))
+         return true
       end)
    end
 
@@ -39,17 +59,20 @@ return function(values, mf, matchable)
       add(name .. "_before:", function(self, _, m, v)
          local t = time_interpret(v)
          if t then self:lt("access", t) end
+         return true
       end)
       
       add(name .. "_after:", function(self, _, m, v)
          local t = time_interpret(v)
          if t then self:gt("access", t) end
+         return true
       end)
    end
 
    for k,v in pairs(values.tags or {}) do
       add(k .. ":", function(self, _, m, v)
          self:tags(v, "bookmark_tags")
+         return true
       end)
    end
    -- TODO tags.
