@@ -23,8 +23,8 @@ local function parsed_list(matchable, search_str)
       for _, m in pairs(matchable) do
          local _, n = string.find(el, m)
          if n then -- Match.
-            if #el == n then
-               dibs = m  -- All of them, keep.
+            if #search_str == n then
+               dibs = m  -- Done searching.
                done = true
                break
             else
