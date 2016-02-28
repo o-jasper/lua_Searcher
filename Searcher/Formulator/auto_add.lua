@@ -33,8 +33,15 @@ return function(values, mf, matchable)
    end)
 
    local function orfun(self, state, m,v)
-      state["or"] = tonumber(string.match(v, "[%d]+")) or 2
       self:mode_or()
+
+      local gotnum = tonumber(string.match(v, "[%d]+"))
+      if gotnum or string.find(v, "^[%s]*$") then
+         state["or"] = gotnum or 2
+      else
+         self.match_funs.default(self, state, m, v)
+         state["or"] = 1
+      end
       return true
    end
    add("or:", orfun)
