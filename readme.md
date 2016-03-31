@@ -54,12 +54,27 @@ Luakit has its own variant too.
 
 # TODO
 
+* **Some parts anew;**
+  + "tree" based statements on lua end. (*knew* i shouldah...)
+
+    The searcher-from search-term based on that.
+
+    A subset of these will be filters as per
+    [this idea](http://ojasper.nl/blog/software/2015/11/12/libre_bus.html).
+
+  + Derive from the general Sql object, making a "special" one that
+    manages its collumns, adding them as needed.
+
+    And has its own concept of "an object with a list/table attached".
+
+    Basically do a lot of stuff now-done manually automatically.
+
 * Luajit version segfaults.
 
 * Get luakit variant to work too.
 
 * Readme improvement?`
-    
+
 ## Lua Ring
 
 * [lua_Searcher](https://github.com/o-jasper/lua_Searcher) sql formulator including
