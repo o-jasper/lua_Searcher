@@ -17,12 +17,11 @@ local s = Sql:new{filename = ":memory:", cmd_strs=cmds, repl=repl}
 
 s.cmds.create()
 
-local list, i = {}, 0
-while i < 100 do
+local list = {}
+while #list < 100 do
    local add = math.random(1000)
    table.insert(list, add)
    s.cmds.add(add)
-   i = i + 1
 end
 table.sort(list)
 
