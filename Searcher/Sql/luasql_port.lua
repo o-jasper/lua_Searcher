@@ -29,15 +29,8 @@ local sql_command_str = require "Searcher.Sql.command_str"
 function Sql:command_string(sql_pattern, args)  -- TODO question marks and arguments..
    if not args or #args == 0 then return sql_pattern end
 
-   local use_args = {}
-   for _, arg in ipairs(args) do
-      if type(arg) == "string" then
-         table.insert(use_args, self.db:escape(tostring(arg)))
-      else
-         table.insert(use_args, arg)
-      end
-   end
-   local ret = sql_command_str(sql_pattern, use_args)
+   local function prep_string(str) return self.db:escape(tostring(str)) end
+   local ret = sql_command_str(sql_pattern, args, prep_string)
    print(ret)
    return ret
 end
