@@ -31,7 +31,7 @@ function Sql:new(new)
 end
 
 function Sql:init()
-   assert(self.filename)
+   assert(self.filename, "Need file name (:memory: for temporary")
    Sql_port.init(self)
    self.repl = self.repl or {}
    self.cmd_strs = self.cmd_strs or {}
