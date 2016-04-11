@@ -43,10 +43,8 @@ function This:insert_sql_create_table(kind)
          table.insert(ret, name .. " " .. sql_tp)
       end
    end
-   local sql = "CREATE TABLE IF NOT EXISTS " .. kind.sql_name .. " (\n" ..
+   return "CREATE TABLE IF NOT EXISTS " .. kind.sql_name .. " (\n" ..
       table.concat(ret, ",\n") .. ");"
-   print(sql)
-   return sql
 end
 
 local function figure_id(self)
@@ -61,7 +59,7 @@ This.last_id = 0
 
 -- Remove things with equal keys.
 local function rm_keyed(self, kind, keyed, ins_value)
-   if keyed and #keyed > 0 then
+   if #keyed > 0 then
       local vals = {}
       for _, var in ipairs(keyed) do
          table.insert(vals, ins_value[var])
@@ -138,6 +136,8 @@ function This:kind_metatable()
       __index = function(kind, key)
          if key == "sql_name" then
             rawset(kind, "sql_name", self.prep .. kind.name)
+         elseif key == "sql_var" then
+            return "el"
          elseif key == "sql_insert_n" then
             local ret = setmetatable({},  -- Compiles insert-this-number on fly.
                { __index = function(list, n)
@@ -157,7 +157,6 @@ function This:kind_metatable()
             end
             local sql = "DELETE FROM " .. kind.sql_name ..
                " WHERE " .. table.concat(vars, " AND ")
-            print("*",sql)
             rawset(kind, "sql_rm_keyed", self.db:compile(sql))
          elseif key == "self" then
             rawset(kind, "self", self)
@@ -194,7 +193,7 @@ local filter_sql = require("Searcher.TableMake.filter").filter_sql
 
 function This:filter_sql(filter)
    local kind = self.kinds[filter.in_kind]
-   local sql = "SELECT * FROM " .. kind.sql_name .. "\n WHERE"
+   local sql = "SELECT * FROM " .. kind.sql_name .. " " .. kind.sql_var .. "\n WHERE"
    sql = sql .. filter_sql(kind, filter)
    local order_by = filter.order_by or kind.pref_order_by
    if order_by then

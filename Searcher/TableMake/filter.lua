@@ -25,20 +25,24 @@ local function search_1(kind, fun, tagged)
    -- Exists in sub-entry.
    local function sub_exists(subkind_name, from_id_name)
       local subkind = kind.self.kinds[subkind_name]
-      local sql = "\n EXISTS ( SELECT * FROM " .. subkind.db_name .. "\n" ..
+      local ins_sql = search_1(subkind, fun, tagged)
+      local sql = "\n (EXISTS ( SELECT * FROM " .. subkind.sql_name .. " WHERE\n" ..
          (from_id_name or "from_id") .. " == " .. kind.sql_var .. ".id AND\n" ..
-         search_1(subkind, fun, tagged) .. ")"
-   end
-   for _, el in ipairs(kind.ref_self) do  -- In things referring to this.
-      if el[tagged] then sub_exist(unpack(el, 2,3)) end
-   end
-   for _, el in ipairs(kind.key_self) do  -- In things referring to this with key.
-      if el[tagged] then
-         local _, keyself_kind_name, _, from_id_name = unpack(el)
-         sub_exist(keyself_kind_name, from_id_name)
+         ins_sql .. "))"
+      if ins_sql ~= "()" then
+         table.insert(subret, sql)
       end
    end
-   return table.insert(ret, "(" .. table.concat(subret, " OR ") .. ")")   
+   for _, el in ipairs(kind.ref_self or {}) do  -- In things referring to this.
+      if el[tagged] then sub_exists(unpack(el, 2,3)) end
+   end
+   for _, el in ipairs(kind.key_self or {}) do  -- In things referring to this with key.
+      if el[tagged] then
+         local _, keyself_kind_name, _, from_id_name = unpack(el)
+         sub_exists(keyself_kind_name, from_id_name)
+      end
+   end
+   return  "(" .. table.concat(subret, " OR ") .. ")"
 end
 
 local function between(between_str, assert_n)
@@ -56,8 +60,10 @@ end
 local function use_search_1(fun, tagged)
    return function(kind, filter)
       local ret = {}
-      for _, f in ipairs(filter) do
-         table.insert(ret, search_1(kind, function(el) return fun(f, el) end, tagged))
+      for i, f in ipairs(filter) do
+         if i > 1 then
+            table.insert(ret, search_1(kind, function(el) return fun(f, el) end, tagged))
+         end
       end
       return "(" .. table.concat(ret, " AND ") .. ")"
    end
