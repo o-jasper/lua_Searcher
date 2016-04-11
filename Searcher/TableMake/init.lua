@@ -27,7 +27,8 @@ function This:init()
 end
 
 function This:insert_sql_create_table(kind)
-   kind.args, kind.ref = kind.args or {}, kind.ref or {}
+   rawset(kind, "args", {})
+   rawset(kind, "ref", {})
 
    local ret = { "id INTEGER PRIMARY KEY" }
    for _, el in ipairs(kind) do --
@@ -42,8 +43,10 @@ function This:insert_sql_create_table(kind)
          table.insert(ret, name .. " " .. sql_tp)
       end
    end
-   return "CREATE TABLE IF NOT EXISTS " .. self.prep .. kind.name .. "(\n" ..
+   local sql = "CREATE TABLE IF NOT EXISTS " .. kind.sql_name .. " (\n" ..
       table.concat(ret, ",\n") .. ");"
+   print(sql)
+   return sql
 end
 
 local function figure_id(self)
@@ -57,34 +60,34 @@ end
 This.last_id = 0
 
 -- Remove things with equal keys.
-local function rm_keyed(self, keyed, ins_value)
-   if keyed then
-      if not keyed.compiled then
-         local vars = {}
-         for _, var in ipairs(keyed) do
-            table.insert(vars, var .. " == ?")
-         end
-         local sql = "DELETE FROM " .. prep .. kind_name ..
-            " WHERE " .. table.concat(vars, " AND ")
-         keyed.compiled = self.db:compile(sql)
-      end
+local function rm_keyed(self, kind, keyed, ins_value)
+   if keyed and #keyed > 0 then
       local vals = {}
       for _, var in ipairs(keyed) do
          table.insert(vals, ins_value[var])
       end
-      keyed.compiled(unpack(vals, 1, #keyed))
+      kind.sql_rm_keyed(unpack(vals, 1, #keyed))
    end   
 end
 
 -- Insert a value.
-function This:insert(ins_value)
+function This:insert(ins_value, brand_new)
    assert(type(ins_value) == "table")
    assert(type(ins_value.kind) == "string")
    local kind = self.kinds[ins_value.kind]
+
+   local id = ins_value.id
+   if id then
+      kind.sql_rm_id(id)
+   else
+      id = figure_id(self)
+      ins_value.id = id
+   end
+
    assert(kind, "Must add the kind first. Don't know: "  .. ins_value.kind)
    -- "Keying" entries only have one per those values of keys.
    -- So delete those with the same ones as now.
-   rm_keyed(self, kind.keyed)
+   rm_keyed(self, kind, not brand_new and kind.keyed, ins_value)
 
    -- Figure out the values in-order, fix references.
    local n, values = 0, {}
@@ -106,7 +109,6 @@ function This:insert(ins_value)
       end
       table.insert(values, val)
    end
-   local id = figure_id(self)
 
    -- Figure out things that refer to self.
    for _, el in ipairs(kind.ref_self or {}) do
@@ -117,7 +119,7 @@ function This:insert(ins_value)
    end
    -- Things that refer to self via a key
    for _, el in ipairs(kind.key_self or {}) do
-      local var_name, keyself_kind_name, key_name, from_id_name = unpack(el)
+      local var_name, keyself_kind_name, from_id_name, key_name = unpack(el)
       for k,v in pairs(ins_value[var_name] or {}) do
          v.kind = keyself_kind_name
          v[from_id_name or "from_id"] = id
@@ -127,26 +129,89 @@ function This:insert(ins_value)
    end
 
    -- Produce the insert command if needed.
-   kind.insert_cmd = kind.insert_cmd or {}
-   if not kind.insert_cmd[n] then
-      local sql = "INSERT INTO " .. self.prep .. ins_value.kind ..
-         " VALUES (" .. string.rep("?,", n) .. "?);"
-      kind.insert_cmd[n] = self.db:compile(sql)
-   end
-   -- Run insert command, return the `id`
-   kind.insert_cmd[n](id, unpack(values, 1, n))
+   kind.sql_insert_n[n](id, unpack(values, 1, n))
    return id
 end
 
--- function This:extend_kind   -- TODO
+function This:kind_metatable()
+   return {  -- Some things are added as you go.
+      __index = function(kind, key)
+         if key == "sql_name" then
+            rawset(kind, "sql_name", self.prep .. kind.name)
+         elseif key == "sql_insert_n" then
+            local ret = setmetatable({},  -- Compiles insert-this-number on fly.
+               { __index = function(list, n)
+                    local sql = "INSERT INTO " .. kind.sql_name ..
+                       " VALUES (" .. string.rep("?,", n) .. "?);"
+                    rawset(list, n, self.db:compile(sql))
+                    return list[n]
+            end})
+            rawset(kind, "sql_insert_n", ret)
+         elseif key == "sql_rm_id" then
+            rawset(kind, rm_id, self.db:compile("DELETE FROM " .. kind.sql_name ..
+                                                   " WHERE id == ?"))
+         elseif key == "sql_rm_keyed" then
+            local vars = {}
+            for _, var in ipairs(kind.keyed) do
+               table.insert(vars, var .. " == ?")
+            end
+            local sql = "DELETE FROM " .. kind.sql_name ..
+               " WHERE " .. table.concat(vars, " AND ")
+            print("*",sql)
+            rawset(kind, "sql_rm_keyed", self.db:compile(sql))
+         elseif key == "self" then
+            rawset(kind, "self", self)
+         elseif key == "pref_order_by" then
+            for _, el in ipairs(kind) do
+               if el.order_by_this then
+                  rawset(kind, "pref_order_by", el[1])
+                  return el[1]
+               end
+            end
+         elseif key == "keyed" then
+            local keyed = {}
+            for _, el in ipairs(kind) do
+               if el.keyed then
+                  table.insert(keyed, el[1])
+               end
+            end
+            rawset(kind, "keyed", keyed)
+         end
+         return rawget(kind, key)
+      end,
+      __newindex = function() error("Hands off") end,
+   }
+end
 
 function This:add_kind(kind)
    local kind_name = kind.name
+   kind = setmetatable(kind, self:kind_metatable())
    self.kinds[kind_name] = kind
-   print(self:insert_sql_create_table(kind))
    self.db:exec(self:insert_sql_create_table(kind))
 end
 
+local filter_sql = require("Searcher.TableMake.filter").filter_sql
 
+function This:filter_sql(filter)
+   local kind = self.kinds[filter.in_kind]
+   local sql = "SELECT * FROM " .. kind.sql_name .. "\n WHERE"
+   sql = sql .. filter_sql(kind, filter)
+   local order_by = filter.order_by or kind.pref_order_by
+   if order_by then
+      sql = sql .. "\nORDER BY " .. order_by .. (filter.desc and " DESC" or "")
+   end
+   return sql
+end
+
+function This:filter(filter) return self.db:exec(self:filter_sql(filter)) end
+
+function This:delete_by_filter_sql(filter)
+   local kind = self.kinds[filter.in_kind]
+   local sql = "DELETE FROM " .. kind.sql_name "\n WHERE"
+   return sql .. filter_sql(kind, filter)
+end
+function This:delete_by_filter(filter)
+   return self.db:exec(self:delete_by_filter_sql(filter))
+end
 
 return This
