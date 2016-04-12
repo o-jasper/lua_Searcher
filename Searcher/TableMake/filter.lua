@@ -11,22 +11,22 @@ local function filter_sql(kind, filter)
    end
 end 
 
-local function sql_search_1(kind, fun, tagged, combine)
+local function sql_search_1(kind, fun, state)
    local subret = {}
    for _,el in ipairs(kind) do
-      if el[tagged] then  -- Searchable entry.
+      if el[state.tagged] then  -- Searchable entry.
          if el[2] == "string" then
             table.insert(subret, fun(el))
          elseif el[2] == "ref" then  -- Go down one.
             table.insert(subret,
-                         sql_search_1(kind.self.kinds[el[3]], fun, tagged, combine))
+                         sql_search_1(kind.self.kinds[el[3]], fun, state))
          end
       end
    end
    -- Exists in sub-entry.
    local function sub_exists(subkind_name, from_id_name)
       local subkind = kind.self.kinds[subkind_name]
-      local ins_sql = sql_search_1(subkind, fun, tagged, combine)
+      local ins_sql = sql_search_1(subkind, fun, state)
       local sql = "\n (EXISTS (SELECT * FROM " .. subkind.sql_name .. " WHERE\n" ..
          (from_id_name or "from_id") .. " == " .. kind.sql_var .. ".id AND\n" ..
          ins_sql .. "))"
@@ -35,15 +35,15 @@ local function sql_search_1(kind, fun, tagged, combine)
       end
    end
    for _, el in ipairs(kind.ref_self or {}) do  -- In things referring to this.
-      if el[tagged] then sub_exists(unpack(el, 2,3)) end
+      if el[state.tagged] then sub_exists(unpack(el, 2,3)) end
    end
    for _, el in ipairs(kind.key_self or {}) do  -- In things referring to this with key.
-      if el[tagged] then
+      if el[state.tagged] then
          local _, keyself_kind_name, from_id_name = unpack(el)
          sub_exists(keyself_kind_name, from_id_name)
       end
    end
-   return  "(" .. table.concat(subret, combine) .. ")"
+   return  "(" .. table.concat(subret, state.combine) .. ")"
 end
 
 local function between(between_str, assert_n, filterfun)
@@ -58,16 +58,15 @@ local function between(between_str, assert_n, filterfun)
    end
 end
 
-local function use_search_1(fun, tagged, search_1, combine)
+local function use_search_1(fun, search_1, state)
    return function(kind, filter)
       local ret = {}
       for i, f in ipairs(filter) do
          if i > 1 then
-            table.insert(ret, search_1(kind, function(el) return fun(f, el) end,
-                                       tagged, combine))
+            table.insert(ret, search_1(kind, function(el) return fun(f, el) end, state))
          end
       end
-      return "(" .. table.concat(ret, combine) .. ")"
+      return "(" .. table.concat(ret, state.combine) .. ")"
    end
 end
 
@@ -86,7 +85,7 @@ filter_sql_funs = {
    ["*"] = between(" * "),  ["/"] = between(" / "), ["%"] = between(" % "),
 
    search = use_search_1(function(f, el) return el[1] .. " LIKE '%" .. f .. "%'" end,
-      "searchable", sql_search_1, " OR "),
+      sql_search_1, {tagged="searchable", combine=" OR "}),
 }
 
 local filter_lua_funs = {}
@@ -104,15 +103,14 @@ end
 
 --
 
-local function lua_search_1(kind, fun, tagged, combine)
+local function lua_search_1(kind, fun, state)--tagged, combine)
    local subret = {}
    for _,el in ipairs(kind) do
-      if el[tagged] then  -- Searchable entry.
+      if el[state.tagged] then  -- Searchable entry.
          if el[2] == "string" then
             table.insert(subret, fun(el))
          elseif el[2] == "ref" then  -- Go down one.
-            table.insert(subret, lua_search_1(kind.self.kinds[el[3]],
-                                              fun, tagged, combine))
+            table.insert(subret, lua_search_1(kind.self.kinds[el[3]], fun, state))
          end
       end
    end
@@ -146,21 +144,21 @@ end)()]], "{%%([%w_]+)[%s]*([^}]*)}", {
             oldvar = kind.sql_var,
             var = subkind.sql_var, var_name = key_name and var_name or "ref_self",
             old_var = kind.sql_var,
-            sub_search = lua_search_1(subkind, fun, tagged, combine),
+            sub_search = lua_search_1(subkind, fun, state),
             key_stuff = key_stuff or " "
       })
       table.insert(subret, code)
    end
    for _, el in ipairs(kind.ref_self or {}) do  -- In things referring to this.
-      if el[tagged] then sub_exists(unpack(el)) end
+      if el[state.tagged] then sub_exists(unpack(el)) end
    end
    for _, el in ipairs(kind.key_self or {}) do  -- In things referring to this with key.
-      if el[tagged] then
+      if el[state.tagged] then
          local var_name, keyself_kind_name, _, key_name = unpack(el)
          sub_exists(var_name, keyself_kind_name, key_name or "key")
       end
    end
-   return  "(" .. table.concat(subret, combine) .. ")"
+   return  "(" .. table.concat(subret, state.combine) .. ")"
 end
 
 filter_lua_funs = {
@@ -180,7 +178,7 @@ filter_lua_funs = {
    search = use_search_1(function(f, el)
          return string.format([[string.find(%s, ".%s.")]], el[1], f)
       end,
-      "searchable", lua_search_1, " and "),
+      lua_search_1, {tagged="searchable", combine=" and "}),
 }
 
 local function search_by_filter_sql(kind, filter)
