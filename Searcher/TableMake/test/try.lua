@@ -20,14 +20,10 @@ tm:insert{kind="trytest", first=1, second="two", tags={has_a_tag={}, another={}}
 tm:insert{kind="trytest", first=1, second="two sec", tags={has_a_tag={}, another={}}}
 tm:insert{kind="trytest", first=1, second="not here", tags={sec_but_here={}, another={}}}
 
--- for _, el in ipairs(tm.db:exec("SELECT * FROM tm_trytest;")) do
---    for k,v in pairs(el) do print(k,v) end
--- end
--- for _, el in ipairs(tm.db:exec("SELECT * FROM tm_trytest_tags")) do
---    for k,v in pairs(el) do print(k,v) end
--- end
---for _, el in ipairs(tm:filter{"sql_like", "second", "%", in_kind="trytest"}) do
 for _, el in ipairs(tm:filter{"search", "sec", in_kind="trytest"}) do
    for k,v in pairs(el) do print("f", k,v) end
 end
 
+local filter_lua = require("Searcher.TableMake.filter").filter_lua
+
+print(filter_lua(tm.kinds.trytest, {"search", "sec", in_kind="trytest"}))
