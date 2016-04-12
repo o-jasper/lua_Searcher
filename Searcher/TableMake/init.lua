@@ -139,8 +139,6 @@ function This:kind_metatable()
       __index = function(kind, key)
          if key == "sql_name" then
             rawset(kind, "sql_name", self.prep .. kind.name)
-         elseif key == "sql_var" then
-            return "el"
          elseif key == "sql_insert_n" then
             local ret = setmetatable({},  -- Compiles insert-this-number on fly.
                { __index = function(list, n)

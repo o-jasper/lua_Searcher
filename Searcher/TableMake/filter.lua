@@ -11,7 +11,10 @@ local function filter_sql(kind, filter)
    end
 end 
 
-local function sql_search_1(kind, fun, state)
+local function sql_search_1(kind, fun, state, depth)
+   depth = depth or 0
+   local function var(n) return string.format("d%d", depth + (n or 0)) end
+
    local subret = {}
    for _,el in ipairs(kind) do
       if el[state.tagged] then  -- Searchable entry.
@@ -19,16 +22,16 @@ local function sql_search_1(kind, fun, state)
             table.insert(subret, fun(el))
          elseif el[2] == "ref" then  -- Go down one.
             table.insert(subret,
-                         sql_search_1(kind.self.kinds[el[3]], fun, state))
+                         sql_search_1(kind.self.kinds[el[3]], fun, state, depth + 1))
          end
       end
    end
    -- Exists in sub-entry.
    local function sub_exists(subkind_name, from_id_name)
       local subkind = kind.self.kinds[subkind_name]
-      local ins_sql = sql_search_1(subkind, fun, state)
+      local ins_sql = sql_search_1(subkind, fun, state, depth + 1)
       local sql = "\n (EXISTS (SELECT * FROM " .. subkind.sql_name .. " WHERE\n" ..
-         (from_id_name or "from_id") .. " == " .. kind.sql_var .. ".id AND\n" ..
+         (from_id_name or "from_id") .. " == " .. var(0) .. ".id AND\n" ..
          ins_sql .. "))"
       if ins_sql ~= "()" then
          table.insert(subret, sql)
@@ -103,14 +106,18 @@ end
 
 --
 
-local function lua_search_1(kind, fun, state)--tagged, combine)
+local function lua_search_1(kind, fun, state, depth)
+   depth = depth or 0
+   local function var(n) return string.format("d%d", depth + (n or 0)) end
+
    local subret = {}
    for _,el in ipairs(kind) do
       if el[state.tagged] then  -- Searchable entry.
          if el[2] == "string" then
             table.insert(subret, fun(el))
          elseif el[2] == "ref" then  -- Go down one.
-            table.insert(subret, lua_search_1(kind.self.kinds[el[3]], fun, state))
+            table.insert(subret, lua_search_1(kind.self.kinds[el[3]],
+                                              fun, state, depth+1))
          end
       end
    end
@@ -119,13 +126,13 @@ local function lua_search_1(kind, fun, state)--tagged, combine)
       local subkind = kind.self.kinds[subkind_name]
 
       local key_stuff = key_name and
-         string.format("%s.%s = key", subkind.sql_var, key_name)
+         string.format("%s.%s = key", var(0), key_name)
 
       local listkeys, listvals = {}, {}
       for _, el in ipairs(subkind) do
          if el[1] ~= key_name then
             table.insert(listkeys, el[1])
-            table.insert(listvals, subkind.sql_var .. "." .. el[1])
+            table.insert(listvals, var(1) .. "." .. el[1])
          end
       end
 
@@ -136,14 +143,13 @@ local function lua_search_1(kind, fun, state)--tagged, combine)
       return true
     end
   end
-end)({%oldvar}.{%var_name})]], "{%%([%w_]+)[%s]*([^}]*)}", {
+end)({%old_var}.{%var_name})]], "{%%([%w_]+)[%s]*([^}]*)}", {
             listkeys = table.concat(listkeys, ","),
             listvals = table.concat(listvals, ","),
             key_name = key_name or "_",
-            oldvar = kind.sql_var,
-            var = subkind.sql_var, var_name = key_name and var_name or "ref_self",
-            old_var = kind.sql_var,
-            sub_search = lua_search_1(subkind, fun, state),
+            old_var = var(0), var = var(1),
+            var_name = key_name and var_name or "ref_self",
+            sub_search = lua_search_1(subkind, fun, state, depth + 1),
             key_stuff = key_stuff or " "
       })
       table.insert(subret, code)
@@ -181,7 +187,7 @@ filter_lua_funs = {
 }
 
 local function search_by_filter_sql(kind, filter)
-   local sql = "SELECT * FROM " .. kind.sql_name .. " " .. kind.sql_var .. " WHERE\n"
+   local sql = "SELECT * FROM " .. kind.sql_name .. " d0" .. " WHERE\n"
    sql = sql .. filter_sql(kind, filter)
    local order_by = filter.order_by or kind.pref_order_by
    if order_by then
