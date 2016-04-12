@@ -100,9 +100,12 @@ function This:insert(ins_value, brand_new)
                val.kind = el[3]
                val = val.id or self:insert(val)
             end
-         else  -- Insert value.
-            assert(type(val) == el[2], string.format("Type mismatch %s ~= %s",
-                                                     type(val), el[2]))
+         elseif el[2] == "integer" then
+            assert(type(val) == el[2] and val%1 == 0,
+                   string.format("Type mismatch expected integer, have %s", val))
+         else
+            assert(type(val) == el[2], string.format("Type mismatch type(%s) ~= %s",
+                                                     val, el[2]))
          end  -- nil.
       end
       table.insert(values, val)
@@ -193,7 +196,7 @@ local filter_sql = require("Searcher.TableMake.filter").filter_sql
 
 function This:filter_sql(filter)
    local kind = self.kinds[filter.in_kind]
-   local sql = "SELECT * FROM " .. kind.sql_name .. " " .. kind.sql_var .. "\n WHERE"
+   local sql = "SELECT * FROM " .. kind.sql_name .. " " .. kind.sql_var .. " WHERE\n"
    sql = sql .. filter_sql(kind, filter)
    local order_by = filter.order_by or kind.pref_order_by
    if order_by then
