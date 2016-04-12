@@ -129,15 +129,14 @@ local function lua_search_1(kind, fun, state)--tagged, combine)
          end
       end
 
-      local code = string.gsub([[(function()
-  local list = {%oldvar}.{%var_name}
+      local code = string.gsub([[(function(list)
   for {%key_name}, {%var} in ipairs(list) do
     local {%listkeys} = {%listvals}
     if {%sub_search}  then
       return true
     end
   end
-end)()]], "{%%([%w_]+)[%s]*([^}]*)}", {
+end)({%oldvar}.{%var_name})]], "{%%([%w_]+)[%s]*([^}]*)}", {
             listkeys = table.concat(listkeys, ","),
             listvals = table.concat(listvals, ","),
             key_name = key_name or "_",
