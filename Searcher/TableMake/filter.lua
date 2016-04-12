@@ -183,6 +183,24 @@ filter_lua_funs = {
       "searchable", lua_search_1, " and "),
 }
 
-return {filter_sql = filter_sql, run_filter=run_filter,
+local function search_by_filter_sql(kind, filter)
+   local sql = "SELECT * FROM " .. kind.sql_name .. " " .. kind.sql_var .. " WHERE\n"
+   sql = sql .. filter_sql(kind, filter)
+   local order_by = filter.order_by or kind.pref_order_by
+   if order_by then
+      sql = sql .. "\nORDER BY " .. order_by .. (filter.desc and " DESC" or "")
+   end
+   return sql
+end
+
+local function delete_by_filter_sql(kind, filter)
+   local sql = "DELETE FROM " .. kind.sql_name "\n WHERE"
+   return sql .. filter_sql(kind, filter)
+end
+
+return {filter_sql = filter_sql,
+        search_by_filter_sql = search_by_filter_sql,
+        delete_by_filter_sql = delete_by_filter_sql,
+
         filter_lua = filter_lua,
 }

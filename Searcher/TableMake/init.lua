@@ -192,25 +192,18 @@ function This:add_kind(kind)
    self.db:exec(self:insert_sql_create_table(kind))
 end
 
-local filter_sql = require("Searcher.TableMake.filter").filter_sql
+local filter = require("Searcher.TableMake.filter")
+local search_by_filter_sql = filter.search_by_filter_sql
+local delete_by_filter_sql = filter.delete_by_filter_sql
 
 function This:filter_sql(filter)
-   local kind = self.kinds[filter.in_kind]
-   local sql = "SELECT * FROM " .. kind.sql_name .. " " .. kind.sql_var .. " WHERE\n"
-   sql = sql .. filter_sql(kind, filter)
-   local order_by = filter.order_by or kind.pref_order_by
-   if order_by then
-      sql = sql .. "\nORDER BY " .. order_by .. (filter.desc and " DESC" or "")
-   end
-   return sql
+   return search_by_filter_sql(self.kinds[filter.in_kind], filter)
 end
 
 function This:filter(filter) return self.db:exec(self:filter_sql(filter)) end
 
 function This:delete_by_filter_sql(filter)
-   local kind = self.kinds[filter.in_kind]
-   local sql = "DELETE FROM " .. kind.sql_name "\n WHERE"
-   return sql .. filter_sql(kind, filter)
+   return delete_by_filter_sql(self.kinds[filter.in_kind], filter)
 end
 function This:delete_by_filter(filter)
    return self.db:exec(self:delete_by_filter_sql(filter))
