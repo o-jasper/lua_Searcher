@@ -36,8 +36,12 @@ function Formulator:init()
 end
 
 function Formulator:include(input)
-   for _, el in ipairs(input.cmd) do
-      table.insert(self.cmd, el)
+   for i, el in ipairs(input.cmd) do
+      if i == 1 then
+         self:extcmd(el)
+      else
+         table.insert(self.cmd, el)
+      end
    end
    for _, el in ipairs(input.input) do
       table.insert(self.input, el)
