@@ -14,33 +14,12 @@ An sql table searcher with:
 * `s:cmd(name)` calls the command, and memoizes the corresponding
   `s:compile` result. (`s.cmds[..]` or `s.cmds.thing` works too)
 
-### Parsing
-This should be entirely separate, with no idea of the database or
-the previous section.
+## Depreciated
+Particularly, `Formulator` and `parsed_list` some stuff below it. Poor choice
+not going full trees internally, and can do neater description of tables, with
+concept of tables referring to tables etcetera.
 
-* `parsed_list(matchable, search_string)` take the *parsed list* and produce sql
-
-  `matchable` is.. TODO document how to take that apart.
-
-### Formulating
-A function should take already-parsed queries and turn them into sql.
-This should have no idea about the db *or* the parsing.
-
-* `Formulator.new({values=, initial=, match_funs=..})` &rarr; `f` where `values`
-  indicates things for defaults,
-  `initial` is the initial sql command to start with.
-   + `values.order_by` indicates how to order defaultly, `values.order_way`
-     the direction(`"ASC"` or `"DESC"`, default latter)
-* `f:search(parsed_list)` "adds a search".
-* `f:finish()` finishes the query creation adding some sorting and stuff, if specified.
-* `f:sql_pattern()` returns the sql_pattern at that point.
-* `f:sql_values()` returns the values at that point.
-* ... many more, that are specific to creating `match_funs`
-
-At this point queries dont do the full range, but `match_funs` can be filled
-to do arbitrary stuff in principle.
-
-**TODO** an example putting it together.
+Formulator is to be replaced with what is now in the TableMake branch.
 
 # Installing
 Either add the package directory to `package.path` or
@@ -50,11 +29,11 @@ Depends on [luasql](https://github.com/keplerproject/luasql) for regular lua,
 luajit currently needs to use the FFI bindings that are in this repo.
 (segfaults so far..)
 
-Luakit has its own variant too.
-
 # TODO
 
-* **Some parts anew;**
+* Was a formulator here, which is no
+
+**Some parts anew;**
   + "tree" based statements on lua end. (*knew* i shouldah...)
 
     The searcher-from search-term based on that.
@@ -72,8 +51,6 @@ Luakit has its own variant too.
 * Luajit version segfaults.
 
 * Get luakit variant to work too.
-
-* Readme improvement?`
 
 ## Lua Ring
 
