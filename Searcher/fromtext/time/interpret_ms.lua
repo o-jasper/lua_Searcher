@@ -8,7 +8,8 @@ local function time_interpret_ms(str, from_t)
       if string.sub(str, 1, 1) == "a" then from_t = 0 else return nil end
    end
 
-   -- TODO next to time-differences could also do 'day before'
+   -- TODO next to time-differences could also do 'day before',
+   -- or time of day/year.
    local num = tonumber(string.sub(str, i or 1, j ~= 0 and j or #str))
    if j == #str then return 1000*((from_t or ms()) + 1000*num) end
 
