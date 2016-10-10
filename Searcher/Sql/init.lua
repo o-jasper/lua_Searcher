@@ -18,17 +18,11 @@ end
 
 local apply_subst = require "page_html.util.apply_subst"
 
-local Sql = { compile = Sql_port.compile,
-              exec = Sql_port.exec, exec_callback= Sql_port.exec_callback
+local Sql = require("Searcher.util.Class"):class_derive{
+   __name = "Searcher.Sql",
+   compile = Sql_port.compile,
+   exec = Sql_port.exec, exec_callback= Sql_port.exec_callback
 }
-Sql.__index = Sql
-Sql.__name = "Searcher.Sql"
-
-function Sql:new(new)
-   new = setmetatable(new or {}, self)
-   new:init()
-   return new
-end
 
 function Sql:init()
    assert(self.filename, "Need file name (:memory: for temporary")

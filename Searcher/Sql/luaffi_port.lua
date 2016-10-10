@@ -8,18 +8,12 @@
 local ffi = require "ffi"
 local sql3 = require "Searcher.Sql.luaffi"
 
-local This = {}
-This.__index = This
+local This = require("Searcher.util.Class"):class_derive{ name="luaffi_port" }
 
 local code = sql3.code
 local OK, DONE, ROW, BUSY = code.OK, code.DONE, code.ROW, code.BUSY
 local FLOAT, INTEGER, TEXT = code.CODE, code.INTEGER, code.TEXT
 
-function This:new(new)
-   new = setmetatable(assert(new), self)
-   new:init()
-   return new
-end
 function This:init()
    self.cdata_ptr = ffi.new("sqlite3*[1]")
    local err = sql3.open(self.filename, self.cdata_ptr)
