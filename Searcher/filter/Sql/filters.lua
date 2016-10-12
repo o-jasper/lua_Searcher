@@ -1,6 +1,6 @@
 
 local maclike = require "Searcher.util.maclike"
-local dom_bin_fun = require("Searcher.LuaFilter.helper").dom_bin_fun
+local dom_bin_fun = require("Searcher.filter.Lua.helper").dom_bin_fun
 
 local Add = {
    ["."] = function(state, filters, expr)
@@ -56,7 +56,7 @@ local Add = {
 }
 
 local Public = {}  -- >TODO
-for k,v in pairs(require "Searcher.LuaFilter.base") do Public[k] = v end
+for k,v in pairs(require "Searcher.filter.Lua.base") do Public[k] = v end
 for k,v in pairs(Add) do Public[k] = v end
 
 return Public

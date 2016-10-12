@@ -5,10 +5,10 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
-local sql_filters = require "Searcher.TableMake.sql_filters"
+local sql_filters = require "Searcher.filter.Sql.filters"
 local maclike = require "Searcher.util.maclike"
 
-local This = require("Searcher.util.Class"):class_derive{ __name="FilterSql" }
+local This = require("Searcher.util.Class"):class_derive{ __name="Searcher.filter.Sql" }
 
 function This:init()
    self._sql, self._search, self._delete = {}, {}, {}

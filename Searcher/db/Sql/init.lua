@@ -18,7 +18,7 @@ function This:init()
    self.kinds = {}
 end
 
-This.Kind = require "Searcher.TableMake.Kind"
+This.Kind = require "Searcher.filter.Sql.Kind"
 
 function This:add_kind(kind)
    assert(kind)

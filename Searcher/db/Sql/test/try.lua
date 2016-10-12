@@ -1,4 +1,4 @@
-local TableMake = require "Searcher.TableMake"
+local TableMake = require "Searcher.db.Sql"
 
 local tm = TableMake:new()
 
@@ -23,8 +23,8 @@ tm:insert{kind="trytest", first=1, second="two ska", tags={has_a_tag={}, another
 tm:insert{kind="trytest", first=1, second="not here", tags={ska_here={}, another={}}}
 
 local args= {"search", "ska", memoize={}, kinds=tm.kinds}
-local F = require "Searcher.TableMake.Filter"
-local filter = require("Searcher.TableMake.FilterBoth"):new(args)
+local F = require "Searcher.filter.Sql"
+local filter = require("Searcher.filter.Both"):new(args)
 
 --print(filter:sql(tm.kinds.trytest))
 

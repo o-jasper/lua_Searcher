@@ -1,4 +1,4 @@
-local Filter = require "Searcher.LuaFilter"
+local Filter = require "Searcher.filter.Lua"
 
 local kinds = {
    trytest = {
