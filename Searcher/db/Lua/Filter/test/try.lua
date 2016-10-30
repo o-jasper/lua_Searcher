@@ -23,15 +23,14 @@ local list = {
    {kind="trytest", first=1, second="not here", tags={sec_but_here={}, another={}}},
 }
 
-local args= {"search", "sec", memoize={}, kinds=kinds}
-local filter = Filter:new(args)
+local filter = Filter:new{"search", "sec", memoize={}, kinds=kinds}
 
 for i, el in ipairs(list) do
    local tags = {}
    for k,v in pairs(el.tags) do
       table.insert(tags, { key = k })
    end
-   local ret = filter:apply(kinds.trytest,
+   local ret = filter:apply("trytest",
                             { tags = tags, kind=el.kind, first=el.first, second=el.second})
    if ret then
       print("**", i)

@@ -9,5 +9,35 @@
 -- of messages.
 
 local This = require("Searcher.db.Lua.Filter.Base"):class_derive{ __name="Filter" }
+local ins = table.insert
+
+local function This_search_fun(self, kind_name)
+   local kind, entries = self.kinds[kind_name], self.entries[kind_name]
+   local filter_fun, ret = self:fun(self, kind), {}
+   if kind.main_key then
+      return function()
+         for mk, entry in pairs(entry) do
+            if filter_fun(entry) then ins(ret, entry) end
+         end
+         return ret
+      end
+   else
+      return function()
+         for entry in pairs(entries) do
+            if filter_fun(entry) then ins(ret, entry) end
+         end
+         return ret
+      end
+   end
+end
+This.search_fun = This_search_fun
+-- TODO/NOTE hrmm the distinction between accessible and inaccessible is gone here..
+-- need to establish the non-accessible as non-oparational from the get-go.
+--
+-- TODO also, tags are no longer separate objects.
+function This:accessible_search(kind_name, ...)
+   return This_search_fun(self, kind_name)(...)
+end
+This.search = This.accessible_search
 
 return This

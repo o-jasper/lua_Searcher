@@ -37,8 +37,8 @@ end
 
 This.fun = this_fun
 
-function This:apply(kind, msg)
-   local kind = kind or self.kinds[msg.kind]
+function This:apply(kind_name, msg)
+   local kind = self.kinds[kind_name or msg.kind]
    assert(kind, string.format("Could not find kind: %s", msg.kind))
    return this_fun(self, kind)(msg)
 end
