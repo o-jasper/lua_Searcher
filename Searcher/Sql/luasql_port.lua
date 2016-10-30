@@ -24,9 +24,7 @@ function Sql:command_string(sql_pattern, args)  -- TODO question marks and argum
    if not args or #args == 0 then return sql_pattern end
 
    local function prep_string(str) return self.db:escape(tostring(str)) end
-   local ret = sql_command_str(sql_pattern, args, prep_string)
-   print(ret)
-   return ret
+   return sql_command_str(sql_pattern, args, prep_string)
 end
 
 function Sql:_cursor(command_str)
