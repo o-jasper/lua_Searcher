@@ -1,6 +1,6 @@
 -- Base filter set for everything.
 
-local maclike = require "Searcher.util..maclike"
+local maclike = require "Searcher.util.maclike"
 
 local Public = {
    ["true"] = function() return "true" end,

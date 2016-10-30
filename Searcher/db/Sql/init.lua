@@ -1,4 +1,4 @@
---  Copyright (C) 09-06-2016 Jasper den Ouden.
+--  Copyright (C) 25-10-2016 Jasper den Ouden.
 --
 --  This is free software: you can redistribute it and/or modify
 --  it under the terms of the Afrero GNU General Public License as published
@@ -8,9 +8,7 @@
 local This = require("Searcher.util.Class"):class_derive{ __constant=true }
 This.Db = require "Searcher.Sql"
 
-This.types = {string = "STRING", number="NUMERIC", boolean="BOOL", integer="INTEGER"}
-
-This.prep = "tm_"
+This.sql_prep = "tm_"
 
 function This:init()
    self.db = self.db or self.Db:new{filename=self.filename or ":memory:",
@@ -18,16 +16,13 @@ function This:init()
    self.kinds = {}
 end
 
-This.Kind = require "Searcher.filter.Sql.Kind"
+local kind_code = require "Searcher.db.Sql.raw.kind_code"
 
 function This:add_kind(kind)
-   assert(kind)
-   kind.kinds = self.kinds
-   kind.db = self.db
-   local kind = self.Kind:new(kind)
-   self.kinds[kind.name] = kind
-   kind:create_table()
-   return kind
+   assert(type(kind) == "table")
+   self.kinds[kind.name] = kind_code.prep(self.db, kind, self.sql_prep)
+   assert(kind._sql_name)
+   kind_code.create_table(self.db, kind)
 end
 
 local function figure_id(self)  -- Figures out a unique id.
@@ -46,11 +41,12 @@ local tps = { set="table", }
 function This:insert(ins_value, new_keys)
    assert(type(ins_value) == "table")
    assert(type(ins_value.kind) == "string")
-   local kind = self.kinds[ins_value.kind]
+   local kind_name = ins_value.kind
+   local kind = self.kinds[kind_name]
 
    local id = ins_value.id
    if id then  -- If with `id`, delete the old one first.
-      kind:rm_id(id)
+      self:rm_id(kind_name, id)
    else
       id = figure_id(self)
       ins_value.id = id
@@ -60,7 +56,7 @@ function This:insert(ins_value, new_keys)
    -- "Keying" entries only have one per those values of keys.
    -- So delete those with the same ones as now.
    if not new_keys then
-      kind:rm_keyed(ins_value)
+      kind_code.rm_keyed(self.db, kind, ins_value)
    end
 
    local ignore_tp = {["return"]=true, return_stream=true, read=true, write=true}
@@ -69,7 +65,7 @@ function This:insert(ins_value, new_keys)
    for i, el in ipairs(kind) do
       local val = ins_value[el[1]]
       if val ~= nil then
-         if el[2] == "table" then  -- Insert sub-table as appropriate kind.
+         if el[2] == "ref" then  -- Insert sub-table as appropriate kind.
             if type(val) ~= "table" then
                assert(type(val) == "number" and val%1 == 0)
             else -- If not already a table reference, insert.
@@ -90,7 +86,7 @@ function This:insert(ins_value, new_keys)
             end
          elseif not ignore_tp[el[2]] then
             assert(type(val) == (tps[el[2]] or el[2]),
-                   string.format("Type mismatch type(%s) ~= %s",
+                   string.format("Type mismatch type(%s) ~= %q",
                                  val, el[2]))
          end  -- nil.
       end
@@ -100,8 +96,22 @@ function This:insert(ins_value, new_keys)
       end
    end
    -- Produce the insert command if needed.
-   kind:ins_n_cmd(n)(id, unpack(values, 1, n))
+   kind_code.ins_n_cmd(self.db, kind, n)(id, unpack(values, 1, n))
    return id
+end
+
+-- NOTE: doesn't delete everything related. (no garbage collection)
+function This:rm_id(kind_name, id)
+   self.db.cmds[kind_name .. "_rm_id"](id)
+end
+
+This.Filter = require "Searcher.db.Sql.Filter"
+-- Produce a filter, which can subsequently do stuff.
+function This:filter(filter, ...)
+   local new = {}
+   for k,v in pairs(filter) do new[k] = v end
+   new.db, new.kinds = self.db, self.kinds
+   return self.Filter:new(new, ...)
 end
 
 return This

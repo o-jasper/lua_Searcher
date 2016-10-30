@@ -1,6 +1,6 @@
 local maclike = require "Searcher.util.maclike"
 
-local function dom_bin_fun(dom, name)
+return function(dom, name)
    return function (state, filters, expr)
       local args = {}
       for i = 2, #expr do
@@ -11,5 +11,3 @@ local function dom_bin_fun(dom, name)
       return table.concat(args, " " .. (name or expr[1]) .. " ")
    end
 end
-
-return { dom_bin_fun = dom_bin_fun }

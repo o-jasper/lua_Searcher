@@ -16,7 +16,7 @@ if not Sql_port then
    pcall(function() Sql_port = require "Searcher.Sql.luasql_port" end)
 end
 
-local apply_subst = require "page_html.util.apply_subst"
+local apply_subst = require "Searcher.util.apply_subst"
 
 local Sql = require("Searcher.util.Class"):class_derive{
    __name = "Searcher.Sql",
@@ -25,7 +25,7 @@ local Sql = require("Searcher.util.Class"):class_derive{
 }
 
 function Sql:init()
-   assert(self.filename, "Need file name (:memory: for temporary")
+   assert(self.filename, "Need file name (\":memory:\" for temporary")
    Sql_port.init(self)
    self.repl = self.repl or {}
    self.cmd_strs = self.cmd_strs or {}
@@ -43,7 +43,7 @@ if not Sql.compile then  -- Fake a compile.
    end
 end
 
-if not Sql.exec_callback then
+if not Sql.exec_callback then  -- TODO what was the use again?
    function Sql:exec_callback(callback, sql_cmd, ...)
       callback(self:exec(sql_cmd, ...))
    end
@@ -69,6 +69,10 @@ function Sql:cmd(name)
       self.memoize[name] = got
       return got
    end
+end
+
+function Sql:exec_expand(cmd)
+   return self:exec(apply_subst(cmd, self.repl))
 end
 
 --function Sql:class_cmd_add(name, sql)
