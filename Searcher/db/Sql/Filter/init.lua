@@ -50,8 +50,8 @@ function This:search_sql(kind_name)
    return sql .. ";"
 end
 
-local function This_search_fun(self, kind_name)
-   assert(type(kind_name) == "string")
+local function raw_search_fun(self, kind_name)
+   assert(type(kind_name) == "string", kind_name)
    local search = self._search[kind_name]
    if not search then
       search = self.db:compile(self:search_sql(kind_name))
@@ -59,11 +59,12 @@ local function This_search_fun(self, kind_name)
    end
    return search
 end
-This.search_fun = This_search_fun
-function This:search(kind_name, ...)
-   return This_search_fun(self, kind_name)(...)
+This.raw_search_fun = raw_search_fun
+function This:raw_search(kind_name, ...)
+   return raw_search_fun(self, kind_name)(...)
 end
 
+-- Makes them entrymetas of the data, which look up more information as needed.
 function This:full_access(kind_name, list)
    for _, el in ipairs(list) do
       EntryMeta.new_1(self, kind_name, el)
@@ -71,8 +72,14 @@ function This:full_access(kind_name, list)
    return list
 end
 
-function This:accessible_search(kind_name, ...)
-   return self:full_access(kind_name, self:search(kind_name, ...))
+function This:search_fun(kind_name)
+   return function(...)
+      return self:full_access(kind_name, raw_search_fun(self, kind_name)(...))
+   end
+end
+
+function This:search(kind_name, ...)
+   return self:full_access(kind_name, raw_search_fun(self, kind_name)(...))
 end
 
 function This:delete_sql(kind_name)

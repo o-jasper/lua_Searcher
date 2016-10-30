@@ -46,7 +46,7 @@ local function sr(list)
    end
 end
 
-sr(filter:accessible_search("trytest"))
+sr(filter:search("trytest"))
 
 --print("--*--")
 --for _,el in pairs(tm.db:exec("SELECT * FROM tm_trytest_tags")) do
