@@ -15,7 +15,7 @@ function This:init()
 end
  
 local maclike = require "Searcher.util.maclike"
-local lua_filters = require "Searcher.db.Lua.Filter.lua"
+local lua_filters = require "Searcher.db.Lua.Filter.raw.lua"
 
 function This:lua(kind)
    assert(self.kinds)
