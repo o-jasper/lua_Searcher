@@ -9,35 +9,49 @@
 -- of messages.
 
 local This = require("Searcher.db.Lua.Filter.Base"):class_derive{ __name="Filter" }
-local ins = table.insert
 
-local function This_search_fun(self, kind_name)
+local function iterate_fun(self, kind_name, fun)
    local kind, entries = self.kinds[kind_name], self.entries[kind_name]
-   local filter_fun, ret = self:fun(self, kind), {}
    if kind.main_key then
-      return function()
-         for mk, entry in pairs(entry) do
-            if filter_fun(entry) then ins(ret, entry) end
-         end
-         return ret
-      end
+      for mk, entry in pairs(entries) do fun(entry) end
    else
-      return function()
-         for entry in pairs(entries) do
-            if filter_fun(entry) then ins(ret, entry) end
-         end
-         return ret
-      end
+      for entry in pairs(entries) do fun(entry) end
    end
 end
-This.search_fun = This_search_fun
--- TODO/NOTE hrmm the distinction between accessible and inaccessible is gone here..
--- need to establish the non-accessible as non-oparational from the get-go.
---
--- TODO also, tags are no longer separate objects.
-function This:accessible_search(kind_name, ...)
-   return This_search_fun(self, kind_name)(...)
+
+local ins = table.insert
+local function This_search(self, kind_name, ...)
+   local ret = {}
+   local filter_fun = self:fun(self.kinds[kind_name])
+   local pass = {...}
+   iterate_fun(self, kind_name,
+               function(entry)
+                  if filter_fun(entry, unpack(pass)) then ins(ret, entry) end 
+   end)
+   return ret
 end
-This.search = This.accessible_search
+
+-- Note: here, no distinction between raw and not.
+This.search = This_search
+This.raw_search = This_search
+
+function This:search_fun(kind_name)
+   return function(...) return This_search(self, kind_name, ...) end
+end
+This.raw_search_fun = This.search_fun
+
+function This:delete(kind_name, ...)
+   local kind = assert(self.kinds[kind_name])
+   local filter_fun = self:fun(kind)
+   local mk, entries = kind.main_key, self.entries[kind_name]
+   iterate_fun(self, kind_name,
+               function(entry)
+                  entries[mk or entry] = nil
+               end)
+end
+
+function This:delete_fun(kind_name)
+   return function(...) self:delete(kind_name, ...) end
+end
 
 return This

@@ -45,7 +45,7 @@ local Add = {
 
    into_topname = function(state, filters, expr)
       local topname, kindname, sub_expr = unpack(expr, 2)
-      local new_kind = state.kinds[kindname]
+      local new_kind = state.kinds[assert(kindname)]
       assert(new_kind, "Could not find kind: " .. kindname)
 
       local args, input, depth = {}, {}, state.depth + 1
@@ -74,7 +74,8 @@ local Add = {
          if el[1] == elname then
             assert(el[2] == "table")
             return {"funwrap", {"into_topname",
-                                "d" .. state.depth .. "_" .. elname, kindname, sub_expr}}
+                                "d" .. state.depth .. "_" .. elname,
+                                assert(kindname), sub_expr}}
          end
       end
       error()
@@ -83,7 +84,7 @@ local Add = {
    into_set = function(state, filters, expr)
       local elname, kindname, sub_expr = unpack(expr, 2)
       local m = maclike(state, filters,
-                        {"into_topname", "el", kindname, sub_expr})
+                        {"into_topname", "el", assert(kindname), sub_expr})
       local list = maclike(state, filters, {".", elname})
       return [[(function()
   local function one(el)

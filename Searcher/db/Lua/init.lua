@@ -16,7 +16,7 @@ end
 
 local KindMeta = require "Searcher.raw.KindMeta"
 
-local Filter = require "Searcher.db.Lua.Filter"
+This.Filter = require "Searcher.db.Lua.Filter"
 
 function This:add_kind(kind)
    assert(type(kind) == "table" and not self.kinds[kind.name])
@@ -46,16 +46,31 @@ function This:insert(ins_value, new_keys)
       rm_keyed(self, ins_value, kind)
    end
 
+   -- Add principal entry.
    local mk = kind.main_key
    if mk then  -- Tabled by main key.
       self.entries[kind_name][ins_value[mk]] = ins_value
    else  -- Tabled by whole thing.
       self.entries[kind_name][ins_value] = true
    end
+
+   -- Add referenced entries.
+   for key, skind_name in ipairs(kind.sets) do
+      local got = ins_value[key]
+      if got then
+         got.kind = got.kind or skind_name
+         assert(got.kind == skind_name, "Kinds not as required")
+         got.from = ins_value
+         self:insert(got)
+      end
+   end
 end
 
 function This:filter(filter, ...)
-   return Filter:new{ db=self }
+   filter.db = self
+   filter.kinds = self.kinds
+   filter.entries = self.entries
+   return self.Filter:new(filter)
 end
 
 return This
