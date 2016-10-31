@@ -86,9 +86,11 @@ local Add = {
       local m = maclike(state, filters,
                         {"into_topname", "el", assert(kindname), sub_expr})
       local list = maclike(state, filters, {".", elname})
+
+      -- TODO read into the type to see ipairs vs pairs.
       return [[(function()
   local function one(el)
-    ]] .. m .. "\n  end\n  for _, el in ipairs(" .. list .. [[) do
+    ]] .. m .. "\n  end\n  for _, el in pairs(" .. list .. [[) do
     if one(el) then return true end
 end end)()]]
    end,
