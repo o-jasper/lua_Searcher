@@ -42,7 +42,7 @@ end
 function This:insert(ins_value, new_keys)
    local kind_name = ins_value.kind
    local kind = self.kinds[kind_name]
-   if not new_keys and #kind.keyed ~= 1 then -- TODO delete the older ones.
+   if not new_keys and #kind.keyed ~= 1 then -- Delete older ones.
       rm_keyed(self, ins_value, kind)
    end
 
@@ -55,13 +55,14 @@ function This:insert(ins_value, new_keys)
    end
 
    -- Add referenced entries.
-   for key, skind_name in ipairs(kind.sets) do
-      local got = ins_value[key]
-      if got then
-         got.kind = got.kind or skind_name
-         assert(got.kind == skind_name, "Kinds not as required")
-         got.from = ins_value
-         self:insert(got)
+   for name, skind_name in pairs(kind.sets) do
+      for key, value in pairs(ins_value[key] or {}) do
+         value.key = key
+
+         value.kind = value.kind or skind_name
+         assert(value.kind == skind_name, "Kinds not as required")
+         value.from = ins_value
+         self:insert(value)
       end
    end
 end
