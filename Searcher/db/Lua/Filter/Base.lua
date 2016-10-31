@@ -15,10 +15,10 @@ function This:init()
 end
  
 local maclike = require "Searcher.util.maclike"
-local lua_filters = require "Searcher.db.Lua.Filter.raw.lua"
+local lua_filters = require "Searcher.db.Lua.Filter.raw.filters"
 
 function This:lua(kind)
-   assert(self.kinds)
+   assert(self.kinds and type(kind) == "table")
    local lua = maclike(
       {depth=0, kind=kind, kind_name=kind.name, kinds=self.kinds},
       lua_filters,
