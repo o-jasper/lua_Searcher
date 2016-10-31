@@ -24,20 +24,27 @@ local function figure_args_n_sets(self)
    end
 end
 
+local function figure_keyeds(self)
+   self.keyed = {}
+   local main_key
+   for i = 1,#self do
+      local el = rawget(self, i)
+      if el.keyed then
+         if el.main_key then
+            assert(not main_key, "May only have one main key.")
+            main_key = el.main_key
+         end
+         table.insert(self.keyed, el[1])
+      end
+   end
+   self.main_key = main_key or (self[1] or {}).main_key
+end
+
 local kindfuns = {
-   args = figure_args_n_sets,
-   sets = figure_args_n_sets,
+   args = figure_args_n_sets, sets = figure_args_n_sets,
    -- All "keyed" values may one have one entity in existence
    --  per value over the whole of the keyed values.
-   keyed = function(self)
-      self.keyed = {}
-      for i = 1,#self do
-         local el = rawget(self, i)
-         if el.keyed then
-            table.insert(self.keyed, el[1])
-         end
-      end
-   end,
+   keyed = figure_keyeds, main_key = figure_keyeds,
 }
 local KindMeta = {
    __index = function(self, key)
