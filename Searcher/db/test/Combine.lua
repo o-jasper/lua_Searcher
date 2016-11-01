@@ -20,23 +20,42 @@ local function do_foreach_db(...)
 end
 do_foreach_db("add_kind", "insert")
 
-local Filter = require("Searcher.util.Class"):class_derive{ __constant=true }
+-- TODO feh this thing keeps reoccuring..
+local function tree_inequal(a, b, say)
+   if type(a) ~= type(b) then
+      return true, say .. " type inequal; " .. type(a) .. " ~= " .. type(b)
+   elseif type(a) == "table" then
+      for k, v in pairs(a) do
+         local ne,s = tree_inequal(v, b[k], say .. "/" .. k)
+         if ne then return ne,s end
+      end
+   else
+      return a ~= b, say .. " value inequal"
+   end
+end
 
+local Filter = require("Searcher.util.Class"):class_derive{ __constant=true }
 function Filter:search(...)
-   local list = {}
+   local lists = {}
    for i,f in ipairs(self) do
+      print(f.__name)
+      table.insert(lists, 1, {})
       for _, el in pairs(f:search(...)) do
-         el.i = i
-         table.insert(list, el)
+         table.insert(lists[1], el)
       end
    end
-   return list
+   for i = 2, #lists do
+      assert( #(lists[1]) == #(lists[i]) )
+      local ne, s = tree_inequal(lists[1], lists[i], "inequal: ")
+      assert(not ne, s)
+   end
+   return lists[1]
 end
 function Filter:search_fun(kind_name)
    return function(...) return self:search(kind_name, ...) end
 end
 
-function Filter:search_sql(...) return "Not supported" end
+function Filter:search_sql(...) return "SQL printing not supported" end
 
 function This:filter(...)
    local filters = {}

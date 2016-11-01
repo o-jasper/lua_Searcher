@@ -24,7 +24,7 @@ tm:insert{kind="trytest", first=1, second="two", tags={has_a_tag={}, another={}}
 tm:insert{kind="trytest", first=1, second="two ska", tags={has_a_tag={}, another={}}}
 tm:insert{kind="trytest", first=1, second="not here", tags={ska_here={}, another={}}}
 
-local filter = tm:filter{"search", "ska"}
+local filter = tm:filter{"search", "ska", order_by="second"}
 
 --print(filter:sql(tm.kinds.trytest))
 

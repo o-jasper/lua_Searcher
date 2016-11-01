@@ -8,7 +8,7 @@
 -- Filter and conversion to lua that can handle the lua-table representation
 -- of messages.
 
-local This = require("Searcher.util.Class"):class_derive{ __name="Base Filter" }
+local This = require("Searcher.util.Class"):class_derive{ __name="Base Lua Filter" }
 
 function This:init()
    self.memoize = {}

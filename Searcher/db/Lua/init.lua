@@ -5,7 +5,8 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
-local This = require("Searcher.util.Class"):class_derive{ __constant=true }
+local This = require("Searcher.util.Class"):class_derive{
+   __constant=true, __name="Lua filter" }
 
 This.last_id = 0
 
