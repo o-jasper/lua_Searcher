@@ -8,19 +8,22 @@
 -- Kinds are seen as "data-like" objects, some elements are computed.
 
 local function figure_args_n_sets(self)
-   self.args, self.sets = {}, {}
+   self.args, self.sets, self.refs = {}, {}, {}
 
    for i = 1,#self do  -- Find what is preferredly ordered as.
       local el = rawget(self,i)
-      local name = el[1]
-      assert(name)
+      local name = assert(el[1])
       self.args[name] = el
 
       if el.order_by_this then
          assert(not self.pref_order_by, "Can only preferentially order by one thing.")
          self.pref_order_by = name
       end
-      self.sets[name] = el[3]  -- What other kind it refers to.
+      if el[2] == "set" then
+         self.sets[name] = el[3]  -- What other kind it refers to.
+      elseif el[2] == "ref" then
+         self.refs[name] = el[3]
+      end
    end
 end
 
