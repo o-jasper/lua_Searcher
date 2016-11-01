@@ -33,17 +33,17 @@ function EntryMeta.__index(self, key)
    if arg[2] == "set" then  -- A set of things.
       -- TODO add `.cmds` for it.
       local str = string.format("SELECT * FROM tm_%s\nWHERE from_id == ? ;", arg[3])
-      local list = {} -- Do query, make accessible
+      local tab, by_key = {}, arg[4] or "key"  -- Fill as table.
       for _, el in ipairs(filter.db:exec(str, rawget(self, "id"))) do
-         table.insert(list, new_1(filter, arg[3], el))
+         tab[el[by_key]] = new_1(filter, arg[3], el)
       end
-      self[key] = list  -- Memoize and return.
-      return list
+      self[key] = tab  -- Memoize and return.
+      return tab
    end
       
    local by_id = self._by_id[key]  -- Reference into sub-kind, grab it.
    if arg[2] == "ref" and by_id then
-      local list = filter.db.cmds[kind._sql_name .. "_get_id"](self._by_id[key])
+      local list = filter.db.cmds[kind.name .. "_get_id"](self._by_id[key])
 
       assert( #list <=2 )  -- Multiple? Must be bug.
 

@@ -8,7 +8,7 @@ tm:add_kind{
    name = "trytest",
    { "first", "number" },
    { "second", "string", searchable=true },
-   {"tags", "set", "trytest_tags", searchable=true}
+   {"tags", "set", "trytest_tags", "key", searchable=true}  -- TODO use the fourth argument.
 }
 
 tm:add_kind{

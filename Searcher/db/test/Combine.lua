@@ -26,8 +26,11 @@ local function tree_inequal(a, b, say)
       return true, say .. " type inequal; " .. type(a) .. " ~= " .. type(b)
    elseif type(a) == "table" then
       for k, v in pairs(a) do
-         local ne,s = tree_inequal(v, b[k], say .. "/" .. k)
-         if ne then return ne,s end
+         -- Sql does these but they're not real.
+         if not ({kind=true, from_id=true, id=true})[k] then
+            local ne,s = tree_inequal(v, b[k], say .. "/" .. k)
+            if ne then return ne,s end
+         end
       end
    else
       return a ~= b, say .. " value inequal"
