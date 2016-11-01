@@ -28,6 +28,7 @@ function EntryMeta.__index(self, key)
    local filter, kind = rawget(self, "_filter"), rawget(self, "_kind")
 
    local arg = kind.args[key]
+   if not arg then return end
 
    if arg[2] == "set" then  -- A set of things.
       -- TODO add `.cmds` for it.
