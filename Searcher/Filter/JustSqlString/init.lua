@@ -5,7 +5,7 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
-local sql_filters = require "Searcher.db.Sql.Filter.raw.filters"
+local sql_filters = require "Searcher.Filter.JustSqlString.raw.filters"
 
 local maclike = require "Searcher.util.maclike"
 

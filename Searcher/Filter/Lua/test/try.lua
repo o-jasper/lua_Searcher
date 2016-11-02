@@ -1,4 +1,5 @@
-local Filter = require "Searcher.db.Lua.Filter"
+local Filter = (arg[1] == "nosql" and require "Searcher.Filter.Lua") or
+   require "Searcher.Filter"
 
 local kinds = {
    trytest = {
