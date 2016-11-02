@@ -9,7 +9,7 @@
 -- of messages.
 
 local This = require("Searcher.db.raw.BaseFilter"):class_derive(
-   require("Searcher.db.Lua.Filter.Base"),
+   require("Searcher.Filter.Lua"),
    { __name="Filter" })
 
 local function iterate_fun(self, kind_name, fun)
