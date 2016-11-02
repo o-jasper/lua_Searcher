@@ -8,7 +8,7 @@
 local EntryMeta = require "Searcher.db.Sql.Filter.raw.EntryMeta"
 
 local This = require("Searcher.db.raw.BaseFilter"):class_derive(
-   require "Searcher.db.Sql.Filter.JustSqlString",
+   require "Searcher.Filter.JustSqlString",
    { __name="Searcher.db.Sql.Filter" })
 
 This.description = [[Sql filter object, the creator specifies the search term.
