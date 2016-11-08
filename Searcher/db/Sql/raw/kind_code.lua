@@ -44,7 +44,12 @@ function Public.ins_n_cmd(db, kind, n)
    return db.cmds[cmd_name]
 end
 
-local types = {string = "STRING", number="NUMERIC", boolean="BOOL", integer="INTEGER",
+-- TODO make text defaultly searchable and string not.
+local types = {string = "STRING", text = "STRING",
+	       number="NUMERIC",
+	       integer = "INTEGER", time = "INTEGER",
+	       boolean = "BOOL",
+	       ref = "INTEGER",
                set = "ignore", id = "INTEGER PRIMARY KEY",
 }
 
@@ -52,18 +57,12 @@ function Public.create_table_sql(kind)
    local ret = { "id INTEGER PRIMARY KEY" }
    for _, el in ipairs(kind) do
       local name, sql_tp = el[1], types[el[2]]
-      if el[2] == "ref" then  -- Reference to something.
-         table.insert(ret, name .. " INTEGER")
-      elseif sql_tp and sql_tp ~= "ignore" then
+      if sql_tp and sql_tp ~= "ignore" then
          table.insert(ret, name .. " " .. sql_tp)
       end
    end
-   return "CREATE TABLE IF NOT EXISTS " .. kind._sql_name .. " (\n" ..
-      table.concat(ret, ",\n") .. ");"
-end
-
-function Public.create_table(db, kind)
-   db:exec(Public.create_table_sql(kind))
+   return "CREATE TABLE IF NOT EXISTS " .. kind._sql_name .. " (\n  " ..
+      table.concat(ret, ",\n  ") .. ");"
 end
 
 -- Remove if keys match exactly.
