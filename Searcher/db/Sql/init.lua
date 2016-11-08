@@ -22,7 +22,8 @@ function This:add_kind(kind)
    assert(type(kind) == "table")
    self.kinds[kind.name] = kind_code.prep(self.db, kind, self.sql_prep)
    assert(kind._sql_name)
-   kind_code.create_table(self.db, kind)
+
+   self.db:exec(kind_code.create_table_sql(kind))
 end
 
 local function figure_id(self)  -- Figures out a unique id.
@@ -72,8 +73,8 @@ function This:insert(ins_value, new_keys)
                val.kind = el[3]
                val = val.id or self:insert(val)
             end
-         elseif el[2] == "integer" then
-            assert(type(val) == el[2] and val%1 == 0,
+         elseif ({ integer=true, time=true })[el[2]] then
+            assert(type(val) == "number" and val%1 == 0,
                    string.format("Type mismatch expected integer, have %s", val))
          elseif el[2] == "set" then
             local var_name, _, kind_name = unpack(el)
