@@ -12,7 +12,7 @@ end
 
 print(table_sql {
 	 name="user",
-	 { "username", "string"},
-	 { "password_hash", "string"}, {"full_name", "string"}, { "email", "string" },
-	 { "department", "ref", "department"}
+	 { "username", "text"},
+	 { "password_hash", "string"}, {"full_name", "text"}, { "email", "text" },
+	 { "department", "ref", "department", searchable=true}
 })
