@@ -25,8 +25,12 @@ while #list < 100 do
 end
 table.sort(list)
 
+local which = (arg[1] == "cmd")
+if arg[1] ~= "exec" then which = math.random() < 0.5 end
+
 for _ = 1,10 do
-   local sql_list = s.cmds.listall_sort()
+   local sql_list = which and s.cmds.listall_sort() or s:exec_expand(cmds.listall_sort)
+   assert(#list == #sql_list)
    for i, el in ipairs(list) do
       local val = sql_list[i]
       assert(val.x == el, string.format("%s ~= %s (%d)", val.x, el, i))

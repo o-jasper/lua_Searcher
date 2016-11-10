@@ -11,13 +11,7 @@ local string_split = require "Searcher.util.string_split"
 
 local sqlite3 = require("luasql.sqlite3").sqlite3("")
 
-local Sql = {}
-
-function Sql:new(new)
-   new = setmetatable(new, self)
-   new:init()
-   return new
-end
+local Sql = require("Searcher.util.Class"):class_derive{ name="Searcher.Sql.luasql_port"}
 
 function Sql:init()
    self.db = sqlite3:connect(self.filename)
@@ -30,9 +24,7 @@ function Sql:command_string(sql_pattern, args)  -- TODO question marks and argum
    if not args or #args == 0 then return sql_pattern end
 
    local function prep_string(str) return self.db:escape(tostring(str)) end
-   local ret = sql_command_str(sql_pattern, args, prep_string)
-   print(ret)
-   return ret
+   return sql_command_str(sql_pattern, args, prep_string)
 end
 
 function Sql:_cursor(command_str)
@@ -66,5 +58,7 @@ end
 function Sql:exec(sql_command, ...)
    return list_cursor(Sql._cursor(self, Sql.command_string(self, sql_command, {...})))
 end
+
+-- TODO iterating version?
 
 return Sql

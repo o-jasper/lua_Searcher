@@ -60,6 +60,7 @@ struct sqlite3_io_methods {
 
 };
 typedef struct sqlite3_mutex sqlite3_mutex;
+typedef struct sqlite3_api_routines sqlite3_api_routines;
 typedef struct sqlite3_vfs sqlite3_vfs;
 typedef void (*sqlite3_syscall_ptr)(void);
 struct sqlite3_vfs {
@@ -124,7 +125,7 @@ struct sqlite3_mem_methods {
  void sqlite3_interrupt(sqlite3*);
  int sqlite3_complete(const char *sql);
  int sqlite3_complete16(const void *sql);
- int sqlite3_busy_handler(sqlite3*, int(*)(void*,int), void*);
+ int sqlite3_busy_handler(sqlite3*,int(*)(void*,int),void*);
  int sqlite3_busy_timeout(sqlite3*, int ms);
  int sqlite3_get_table(
   sqlite3 *db,
@@ -153,9 +154,16 @@ struct sqlite3_mem_methods {
   int (*xAuth)(void*,int,const char*,const char*,const char*,const char*),
   void *pUserData
 );
- void * sqlite3_trace(sqlite3*, void(*xTrace)(void*,const char*), void*);
+ void * sqlite3_trace(sqlite3*,
+   void(*xTrace)(void*,const char*), void*);
  void * sqlite3_profile(sqlite3*,
    void(*xProfile)(void*,const char*,sqlite3_uint64), void*);
+ int sqlite3_trace_v2(
+  sqlite3*,
+  unsigned uMask,
+  int(*xCallback)(unsigned,void*,void*,void*),
+  void *pCtx
+);
  void sqlite3_progress_handler(sqlite3*, int, int(*)(void*), void*);
  int sqlite3_open(
   const char *filename,
@@ -210,6 +218,7 @@ typedef struct sqlite3_stmt sqlite3_stmt;
   const void **pzTail
 );
  const char * sqlite3_sql(sqlite3_stmt *pStmt);
+ char * sqlite3_expanded_sql(sqlite3_stmt *pStmt);
  int sqlite3_stmt_readonly(sqlite3_stmt *pStmt);
  int sqlite3_stmt_busy(sqlite3_stmt*);
 typedef struct Mem sqlite3_value;
@@ -307,6 +316,7 @@ typedef struct sqlite3_context sqlite3_context;
  const void * sqlite3_value_text16be(sqlite3_value*);
  int sqlite3_value_type(sqlite3_value*);
  int sqlite3_value_numeric_type(sqlite3_value*);
+ unsigned int sqlite3_value_subtype(sqlite3_value*);
  sqlite3_value * sqlite3_value_dup(const sqlite3_value*);
  void sqlite3_value_free(sqlite3_value*);
  void * sqlite3_aggregate_context(sqlite3_context*, int nBytes);
@@ -336,6 +346,7 @@ typedef void (*sqlite3_destructor_type)(void*);
  void sqlite3_result_value(sqlite3_context*, sqlite3_value*);
  void sqlite3_result_zeroblob(sqlite3_context*, int n);
  int sqlite3_result_zeroblob64(sqlite3_context*, sqlite3_uint64 n);
+ void sqlite3_result_subtype(sqlite3_context*,unsigned int);
  int sqlite3_create_collation(
   sqlite3*,
   const char *zName,
@@ -406,8 +417,8 @@ typedef void (*sqlite3_destructor_type)(void*);
   char **pzErrMsg
 );
  int sqlite3_enable_load_extension(sqlite3 *db, int onoff);
- int sqlite3_auto_extension(void (*xEntryPoint)(void));
- int sqlite3_cancel_auto_extension(void (*xEntryPoint)(void));
+ int sqlite3_auto_extension(void(*xEntryPoint)(void));
+ int sqlite3_cancel_auto_extension(void(*xEntryPoint)(void));
 
 
 
@@ -480,6 +491,10 @@ struct sqlite3_index_info {
   double estimatedCost;
 
   sqlite3_int64 estimatedRows;
+
+  int idxFlags;
+
+  sqlite3_uint64 colUsed;
 };
  int sqlite3_create_module(
   sqlite3 *db,
@@ -617,6 +632,7 @@ typedef struct sqlite3_backup sqlite3_backup;
  int sqlite3_stricmp(const char *, const char *);
  int sqlite3_strnicmp(const char *, const char *, int);
  int sqlite3_strglob(const char *zGlob, const char *zStr);
+ int sqlite3_strlike(const char *zGlob, const char *zStr, unsigned int cEsc);
  void sqlite3_log(int iErrCode, const char *zFormat, ...);
  void * sqlite3_wal_hook(
   sqlite3*,
@@ -641,6 +657,41 @@ typedef struct sqlite3_backup sqlite3_backup;
   void *pOut
 );
  void sqlite3_stmt_scanstatus_reset(sqlite3_stmt*);
+ int sqlite3_db_cacheflush(sqlite3*);
+ void * sqlite3_preupdate_hook(
+  sqlite3 *db,
+  void(*xPreUpdate)(
+    void *pCtx,
+    sqlite3 *db,
+    int op,
+    char const *zDb,
+    char const *zName,
+    sqlite3_int64 iKey1,
+    sqlite3_int64 iKey2
+  ),
+  void*
+);
+ int sqlite3_preupdate_old(sqlite3 *, int, sqlite3_value **);
+ int sqlite3_preupdate_count(sqlite3 *);
+ int sqlite3_preupdate_depth(sqlite3 *);
+ int sqlite3_preupdate_new(sqlite3 *, int, sqlite3_value **);
+ int sqlite3_system_errno(sqlite3*);
+typedef struct sqlite3_snapshot sqlite3_snapshot;
+ int sqlite3_snapshot_get(
+  sqlite3 *db,
+  const char *zSchema,
+  sqlite3_snapshot **ppSnapshot
+);
+ int sqlite3_snapshot_open(
+  sqlite3 *db,
+  const char *zSchema,
+  sqlite3_snapshot *pSnapshot
+);
+ void sqlite3_snapshot_free(sqlite3_snapshot*);
+ int sqlite3_snapshot_cmp(
+  sqlite3_snapshot *p1,
+  sqlite3_snapshot *p2
+);
 typedef struct sqlite3_rtree_geometry sqlite3_rtree_geometry;
 typedef struct sqlite3_rtree_query_info sqlite3_rtree_query_info;
 
@@ -702,4 +753,106 @@ struct sqlite3_rtree_query_info {
   sqlite3_rtree_dbl rScore;
 
   sqlite3_value **apSqlParam;
+};
+typedef struct Fts5ExtensionApi Fts5ExtensionApi;
+typedef struct Fts5Context Fts5Context;
+typedef struct Fts5PhraseIter Fts5PhraseIter;
+
+typedef void (*fts5_extension_function)(
+  const Fts5ExtensionApi *pApi,
+  Fts5Context *pFts,
+  sqlite3_context *pCtx,
+  int nVal,
+  sqlite3_value **apVal
+);
+
+struct Fts5PhraseIter {
+  const unsigned char *a;
+  const unsigned char *b;
+};
+struct Fts5ExtensionApi {
+  int iVersion;
+
+  void *(*xUserData)(Fts5Context*);
+
+  int (*xColumnCount)(Fts5Context*);
+  int (*xRowCount)(Fts5Context*, sqlite3_int64 *pnRow);
+  int (*xColumnTotalSize)(Fts5Context*, int iCol, sqlite3_int64 *pnToken);
+
+  int (*xTokenize)(Fts5Context*,
+    const char *pText, int nText,
+    void *pCtx,
+    int (*xToken)(void*, int, const char*, int, int, int)
+  );
+
+  int (*xPhraseCount)(Fts5Context*);
+  int (*xPhraseSize)(Fts5Context*, int iPhrase);
+
+  int (*xInstCount)(Fts5Context*, int *pnInst);
+  int (*xInst)(Fts5Context*, int iIdx, int *piPhrase, int *piCol, int *piOff);
+
+  sqlite3_int64 (*xRowid)(Fts5Context*);
+  int (*xColumnText)(Fts5Context*, int iCol, const char **pz, int *pn);
+  int (*xColumnSize)(Fts5Context*, int iCol, int *pnToken);
+
+  int (*xQueryPhrase)(Fts5Context*, int iPhrase, void *pUserData,
+    int(*)(const Fts5ExtensionApi*,Fts5Context*,void*)
+  );
+  int (*xSetAuxdata)(Fts5Context*, void *pAux, void(*xDelete)(void*));
+  void *(*xGetAuxdata)(Fts5Context*, int bClear);
+
+  int (*xPhraseFirst)(Fts5Context*, int iPhrase, Fts5PhraseIter*, int*, int*);
+  void (*xPhraseNext)(Fts5Context*, Fts5PhraseIter*, int *piCol, int *piOff);
+
+  int (*xPhraseFirstColumn)(Fts5Context*, int iPhrase, Fts5PhraseIter*, int*);
+  void (*xPhraseNextColumn)(Fts5Context*, Fts5PhraseIter*, int *piCol);
+};
+typedef struct Fts5Tokenizer Fts5Tokenizer;
+typedef struct fts5_tokenizer fts5_tokenizer;
+struct fts5_tokenizer {
+  int (*xCreate)(void*, const char **azArg, int nArg, Fts5Tokenizer **ppOut);
+  void (*xDelete)(Fts5Tokenizer*);
+  int (*xTokenize)(Fts5Tokenizer*,
+      void *pCtx,
+      int flags,
+      const char *pText, int nText,
+      int (*xToken)(
+        void *pCtx,
+        int tflags,
+        const char *pToken,
+        int nToken,
+        int iStart,
+        int iEnd
+      )
+  );
+};
+typedef struct fts5_api fts5_api;
+struct fts5_api {
+  int iVersion;
+
+
+  int (*xCreateTokenizer)(
+    fts5_api *pApi,
+    const char *zName,
+    void *pContext,
+    fts5_tokenizer *pTokenizer,
+    void (*xDestroy)(void*)
+  );
+
+
+  int (*xFindTokenizer)(
+    fts5_api *pApi,
+    const char *zName,
+    void **ppContext,
+    fts5_tokenizer *pTokenizer
+  );
+
+
+  int (*xCreateFunction)(
+    fts5_api *pApi,
+    const char *zName,
+    void *pContext,
+    fts5_extension_function xFunction,
+    void (*xDestroy)(void*)
+  );
 };
