@@ -16,15 +16,16 @@ local Public = {
       local kind, ret = state.kind, {"or"}
 
       for _, el in ipairs(kind) do
-         if el.searchable then
+         if el.searchable or (el[2] == "text" and not el.searchable == false) then
             local sub = {"or"}
-            if el[2] == "string" then
+            if ({string=true, text=true})[el[2]] then
                for i = 2,#expr do
                   table.insert(sub, {"like", {".", el[1]}, expr[i]})
                end
             elseif el[2] == "ref" then
                table.insert(sub, {"into_ref", el[1], expr})
             elseif el[2] == "set" then
+               assert(el[3])
                table.insert(sub, maclike(state, filters, {"into_set", el[1], el[3], expr}))
             end
             table.insert(ret, #sub > 2 and sub or sub[2])
