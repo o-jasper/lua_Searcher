@@ -1,5 +1,43 @@
+# "Kind" system and databases with filters
+Different "kinds" are essentially sort-of struct-like things, for SQL
+corresponding to a table, with specification what the entries mean.
+
+Usage is:
+
+* Create main object, I.e. `db = require("Searcher.db.Sql"):new{filename=":memory:"}`
+* Add kinds `db:add_kind{...}` *TODO describe kind specification.*
+
+* Make filters `filter = db:filter(filter)` filters are essentially just code
+  described as nested lists. `{"search", "term1", "term2"}` is one command,
+  `{"or", ...}` and `{"and", ...}` exist too. There is also still room to add more.
+
+  + Results that use the DB for further accessing. `filter:access(kind_name)`
+  + Plain results `filter:search(kind_name)`, only top level objects, integers may
+    be references.
+  + Deleting results `filter:delete(kind_name)`
+  
+  + `:..._sql(...)` gets the SQL that would do it. `:_..._fun(...)` returns a function that
+    would.
+
+   The reason you make a filter first and then specify for kinds, is because it is
+   easier to memoize by kinds than by filter.
+
+   All of kinds, filters, entries, are considered just data. The filter object is just
+   a handle to that search.
+
+Note that there is also `require "Searcher.db.Lua"`, which stores it in lua
+tables. No cleverness, just "dumbly" searchers for it. No to-disc storage yet either.
+
+Filters are also separate objects creatable via `require "Searcher.Filter"`.
+(or the more specific ones)
+
 # Database
-An sql table searcher with:
+Database available separate, of course.
+[Luasql](https://github.com/keplerproject/luasql)
+version works, there is a luajit one, but unfortunately it segfaults.
+Hopefully more in the future.
+
+API:
 
 * `Sql:new{filename=, db=..}` &rarr; `s` makes a new object, best to supply just `filename`,
   it'll get you the database.(-connection)
@@ -14,13 +52,6 @@ An sql table searcher with:
 * `s:cmd(name)` calls the command, and memoizes the corresponding
   `s:compile` result. (`s.cmds[..]` or `s.cmds.thing` works too)
 
-## Depreciated
-Particularly, `Formulator` and `parsed_list` some stuff below it. Poor choice
-not going full trees internally, and can do neater description of tables, with
-concept of tables referring to tables etcetera.
-
-Formulator is to be replaced with what is now in the TableMake branch.
-
 # Installing
 Either add the package directory to `package.path` or
 symlink `package_dir/Searcher/` into someting accessible from `package.path`.
@@ -31,26 +62,10 @@ luajit currently needs to use the FFI bindings that are in this repo.
 
 # TODO
 
-* Was a formulator here, which is no
+* Need filters from search-strings.
 
-**Some parts anew;**
-  + "tree" based statements on lua end. (*knew* i shouldah...)
-
-    The searcher-from search-term based on that.
-
-    A subset of these will be filters as per
-    [this idea](http://ojasper.nl/blog/software/2015/11/12/libre_bus.html).
-
-  + Derive from the general Sql object, making a "special" one that
-    manages its collumns, adding them as needed.
-
-    And has its own concept of "an object with a list/table attached".
-
-    Basically do a lot of stuff now-done manually automatically.
-
-* Luajit version segfaults.
-
-* Get luakit variant to work too.
+* Currently a macro-like system for generating the (sql/lua)code. A more general
+  one is better/worse.
 
 ## Lua Ring
 
