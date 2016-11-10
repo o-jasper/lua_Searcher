@@ -23,6 +23,7 @@ function This:add_kind(kind)
    self.kinds[kind.name] = kind_code.prep(self.db, kind, self.sql_prep)
    assert(kind._sql_name)
 
+   -- TODO want this text somehow available?
    self.db:exec(kind_code.create_table_sql(kind))
 end
 

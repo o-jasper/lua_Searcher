@@ -59,4 +59,6 @@ function Sql:exec(sql_command, ...)
    return list_cursor(Sql._cursor(self, Sql.command_string(self, sql_command, {...})))
 end
 
+-- TODO iterating version?
+
 return Sql

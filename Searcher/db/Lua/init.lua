@@ -49,7 +49,7 @@ function This:insert(ins_value, new_keys)
 
    -- Add principal entry.
    local mk = kind.main_key
-   if mk then  -- Tabled by main key.
+   if mk then  -- Tabled by main key.  -- NOTE values not really checked.
       self.entries[kind_name][ins_value[mk]] = ins_value
    else  -- Tabled by whole thing.
       self.entries[kind_name][ins_value] = true
