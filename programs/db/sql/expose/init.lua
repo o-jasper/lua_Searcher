@@ -1,3 +1,14 @@
+--  Copyright (C) 07-12-2016 Jasper den Ouden.
+--
+--  This is free software: you can redistribute it and/or modify
+--  it under the terms of the Afrero GNU General Public License as published
+--  by the Free Software Foundation, either version 3 of the License, or
+--  (at your option) any later version.
+
+-- Uses a filter to search.
+-- TODO  * Version of `:search` producing an iterator.
+--       * Pumping to move the iterator?
+
 local Sql = require "Searcher.db.Sql"
 
 local function inst(tab, name, ins)
@@ -6,17 +17,16 @@ local function inst(tab, name, ins)
    table.insert(list, ins)
 end
 
--- Uses a filter to search.
--- TODO  * Version of `:search` producing an iterator.
---       * Pumping to move the iterator?
-local function search_op(name, filter, exit)
-   for _, ret in ipairs(sql:filter(filter):search(name)) do
-      exit.output(ret)  -- TODO KindMeta may need to be data-izable too.
-   end
-end
-
 local get_more_kinds = true
 local sql
+
+local function search_op(name, msg, exit)
+   local list = sql:filter(msg.filter):raw_search(assert(name))
+   for _, ret in ipairs(list) do
+      exit.output(ret)  -- TODO KindMeta may need to be data-izable too.
+   end
+   exit.output_T_done()
+end
 
 local function insert(msg, exit, index)
    if not msg.kind then
@@ -55,6 +65,7 @@ return {
    -- * The order changes.
    -- Adds a kind, does backlog wrt that kind.
    kind = function(msg, exit)
+      assert(type(msg) == "table", msg)
       sql:add_kind(msg)  -- Add the kind.
 
       local name = msg.name  -- Catch up, inserts.
@@ -74,24 +85,20 @@ return {
 
    -- Inserts an entry.
    insert = insert,
-   -- Insert and re-output.
-   default = function(msg, exit, index)
-      insert(msg, exit, index)
-      exit.output(msg)
-   end,
+   default = insert,
 
    search = function(msg, exit, index)  -- Searches an entity.
-      if get_more_kinds and not sql.kinds[msg.kind] then
-	 exit.kind(msg.kind, index + 1)
-	 inst(behind.search, msg.kind, msg)
+      if get_more_kinds and not sql.kinds[msg.in_kind] then
+	 inst(behind.search, msg.in_kind, msg)
+	 exit.kind(msg.in_kind, index + 1)
       else
-	 search_op(msg.kind, msg, exit)
+	 search_op(msg.in_kind, msg, exit)
       end
    end,
    delete = function(msg)  -- Idem delete.
       if get_more_kinds and not sql.kinds[msg.kind] then
-	 exit.kind(msg.kind, index + 1)
 	 inst(behind.delete, msg.kind, msg)
+	 exit.kind(msg.kind, index + 1)
       else
 	 sql:filter(msg):delete(msg.kind)
       end
