@@ -37,7 +37,7 @@ end
 
 This.last_id = 0
 
-local tps = { set="table", }
+local tps = { set="table", text="string" }
 
 -- Insert a value.
 function This:insert(ins_value, new_keys)

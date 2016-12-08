@@ -16,7 +16,8 @@ local Public = {
       local kind, ret = state.kind, {"or"}
 
       for _, el in ipairs(kind) do
-         if el.searchable or (el[2] == "text" and not el.searchable == false) then
+         if el.searchable or el[2] == "text" then
+	    assert(el.searchable == nil or el.searchable)
             local sub = {"or"}
             if ({string=true, text=true})[el[2]] then
                for i = 2,#expr do

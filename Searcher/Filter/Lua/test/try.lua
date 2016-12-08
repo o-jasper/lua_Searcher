@@ -5,7 +5,7 @@ local kinds = {
    trytest = {
       name = "trytest",
       { "first",  "number" },
-      { "second", "string", searchable=true },
+      { "second", "text" },
       { "tags",   "set", "trytest_tags", searchable=true },
    },
    trytest_tags = {
@@ -13,7 +13,7 @@ local kinds = {
       -- TODO this does not allow for arbitrary graphs. Kinds can only go down tree-style.
       --  Perhaps the specification approach should reflect that.
       {"from_id", "ref", "trytest", keyed=true},
-      {"key", "string", keyed=true, searchable=true}
+      {"key", "text", keyed=true}
    }
 }
 

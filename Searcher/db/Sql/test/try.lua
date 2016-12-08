@@ -5,7 +5,7 @@ local tm = TableMake:new()
 tm:add_kind{
    name = "trytest",
    { "first", "number" },
-   { "second", "string", searchable=true },
+   { "second", "text" },
    {"tags", "set", "trytest_tags", searchable=true}
 }
 
@@ -14,7 +14,7 @@ tm:add_kind{
    -- TODO this does not allow for arbitrary graphs. Kinds can only go down tree-style.
    --  Perhaps the specification approach should reflect that.
    {"from_id", "ref", "trytest", keyed=true},
-   {"key", "string", keyed=true, searchable=true}
+   {"key", "text", keyed=true}
 }
 
 tm:insert{kind="trytest", first=1, second="ska two"}
