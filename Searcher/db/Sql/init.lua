@@ -61,7 +61,7 @@ function This:insert(ins_value, new_keys)
       kind_code.rm_keyed(self.db, kind, ins_value)
    end
 
-   local ignore_tp = {["return"]=true, return_stream=true, read=true, write=true}
+   local ignore_tp = {["return"]=true, ignore=true}
    -- Figure out the values in-order, fix references.
    local n, values = 0, {}
    for i, el in ipairs(kind) do

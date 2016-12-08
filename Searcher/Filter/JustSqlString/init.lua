@@ -15,6 +15,7 @@ This.description = "Just generates the SQL string, no actual searching"
 
 function This:sql(kind)
    assert(self.kinds and kind)
+   if type(kind) == "string" then kind = self.kinds[kind] end
    return maclike(
       {depth=0, kind=kind, kind_name=kind.name, kinds=self.kinds},
       sql_filters,
@@ -25,7 +26,7 @@ end
 function This:search_sql(kind_name)
    local kind = assert(self.kinds[kind_name], "Could not figure kind: " .. kind_name)
    local statement = self:sql(kind)
-   statement = (statement == "TRUE" and "" or " d0 WHERE\n") .. statement
+   statement = statement == "TRUE" and "" or (" d0 WHERE\n" .. statement)
 
    local sql = "SELECT * FROM " .. kind._sql_name .. statement
 
